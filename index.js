@@ -1,14 +1,15 @@
 import init, { get_texture } from './pkg/vef2_2025_e.js';
 
+const WIDTH = 2560;
+const HEIGHT = 1440;
+
 let gl;
 let wasmMemory;
 let texturePointer;
 let textureData;
 
 async function runWasm() {
-    console.log("Behold the RUST");
     wasmMemory = (await init()).memory;
-    console.log("Buffer byte length is ", wasmMemory.buffer.byteLength);
     texturePointer = await get_texture();
 
     webglSetup();
@@ -48,8 +49,7 @@ function webglSetup() {
     uniform sampler2D uSampler;
 
     void main() {
-        // fragColor = vec4(texture(uSampler, texcoords).rgb, 1.0);
-        fragColor = vec4(texture(uSampler, vec2(0.5, 0.5)).rgb, 1.0);
+        fragColor = vec4(texture(uSampler, texcoords).rgb, 1.0);
     }`
 
     const vShader = gl.createShader(gl.VERTEX_SHADER);
@@ -72,13 +72,12 @@ function webglSetup() {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(gl.getUniformLocation(program, 'uSampler'), 0);
 
-    textureData = new Uint8Array(wasmMemory.buffer, texturePointer, 455 * 256 * 3);
-    console.log("Texture size in JS is ", 455*256*3);
+    textureData = new Uint8Array(wasmMemory.buffer, texturePointer, WIDTH * HEIGHT * 3);
 
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 455, 256, 0, gl.RGB, gl.UNSIGNED_BYTE, textureData);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, WIDTH, HEIGHT, 0, gl.RGB, gl.UNSIGNED_BYTE, textureData);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
