@@ -19,8 +19,31 @@ macro_rules! console_log {
 #[allow(unused_imports)]
 pub(crate) use console_log;
 
-fn ray_color(_ray:&ray::ray::Ray) -> Vector3<f64> {
-    return Vector3::new(0.0, 0.0, 0.0);
+fn ray_color(ray:&ray::ray::Ray) -> Vector3<f64> {
+    let t = hit_sphere(Vector3::new(0.0, 0.0, -1.0), 0.5, ray);
+
+    if t > 0.0 {
+        let normal = nalgebra::UnitVector3::new_normalize(ray.at(t) - Vector3::new(0.0, 0.0, -1.0));
+        return 0.5 * Vector3::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0);
+    }
+
+    let unit_direction = nalgebra::UnitVector3::new_normalize(ray.direction());
+    let a = 0.5*unit_direction.y + 1.0;
+    return (1.0-a)*Vector3::new(1.0, 1.0, 1.0) + a*Vector3::new(0.5, 0.7, 1.0);
+}
+
+fn hit_sphere(sphere_centre:Vector3<f64>, radius:f64, ray:&ray::ray::Ray) -> f64 {
+    let oc = sphere_centre - ray.origin();
+    let a = ray.direction().norm().powi(2);
+    let h = nalgebra::Vector::dot(&ray.direction(), &oc);
+    let c = oc.norm().powi(2) - radius * radius;
+    let discriminant = h * h - a * c;
+
+    if discriminant < 0.0 {
+        return -1.0;
+    } else {
+        return (h - discriminant.sqrt() ) / a;
+    }
 }
 
 static mut TEXTURE:Vec<u8> = Vec::new();
@@ -31,7 +54,7 @@ fn main() {
     let aspect_ratio = 16.0/9.0;
 
     // get width from height to line up with common notations i.e. 1080p
-    let image_height = 256;
+    let image_height = 1440;
     let image_width = (aspect_ratio * image_height as f64) as u64;
 
     // Camera

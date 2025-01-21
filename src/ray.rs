@@ -7,12 +7,12 @@ pub mod ray {
     }
 
     impl Ray {
-        pub fn origin(&self) -> &Vector3<f64> {
-            &self.origin
+        pub fn origin(&self) -> Vector3<f64> {
+            self.origin
         }
 
-        pub fn direction(&self)-> &Vector3<f64>{
-            &self.direction
+        pub fn direction(&self)-> Vector3<f64>{
+            self.direction
         }
 
         pub fn new(origin:Vector3<f64>, direction: Vector3<f64>) -> Ray {
@@ -20,6 +20,10 @@ pub mod ray {
                 origin,
                 direction,
             }
+        }
+
+        pub fn at(&self, t:f64) -> Vector3<f64> {
+            self.origin + t * self.direction
         }
     }
 }
