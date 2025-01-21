@@ -62,8 +62,9 @@ fn main() {
 
             let pixel_color = ray_color(&ray);
 
-            // Write colours to local buffer
-            color::write_color(&pixel_color, &mut texture, ((image_height * row + col) * 3) as usize);
+            // Write pixels from the bottom left, left to right, bottom to top
+            // Needed for WebGL texture sampling later
+            color::write_color(&pixel_color, &mut texture, ((image_width * ((image_height - 1) - row) + col) * 3) as usize);
         }
     }
 
