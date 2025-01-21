@@ -11,10 +11,12 @@ extern "C" {
 }
 
 // println, basically
+#[allow(unused_macros)]
 macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
+#[allow(unused_imports)]
 pub(crate) use console_log;
 
 fn ray_color(_ray:&ray::ray::Ray) -> Vector3<f64> {
@@ -31,8 +33,6 @@ fn main() {
     // get width from height to line up with common notations i.e. 1080p
     let image_height = 256;
     let image_width = (aspect_ratio * image_height as f64) as u64;
-
-    console_log!("Texture size in Rust is {}", image_width * image_height * 3);
 
     // Camera
     let focal_length = 1.0;
@@ -52,7 +52,6 @@ fn main() {
     let pixel_00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     
     let mut texture = vec![0u8; image_width as usize * image_height as usize * 3];
-
     for row in 0..image_height {
         for col in 0..image_width {
             let pixel_center = pixel_00_loc + (pixel_delta_u.component_mul(&Vector3::from_element(col as f64)))
