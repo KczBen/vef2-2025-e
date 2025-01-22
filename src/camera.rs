@@ -1,4 +1,5 @@
 use nalgebra::Vector3;
+use rand::Rng;
 
 use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::{HitRecord, SceneObject}, TEXTURE};
 
@@ -6,7 +7,9 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: u64,
     pub image_height: u64,
+    pub samples_per_pixel: u64,
 
+    pixel_samples_scale:f64,
     camera_centre: Vector3<f64>,
     pixel_00_loc: Vector3<f64>,
     pixel_delta_u: Vector3<f64>, 
@@ -22,14 +25,15 @@ impl Camera {
             for col in 0..self.image_width {
                 let pixel_center = self.pixel_00_loc + (self.pixel_delta_u.component_mul(&Vector3::from_element(col as f64)))
                                     + (self.pixel_delta_v.component_mul(&Vector3::from_element(row as f64)));
-                let ray_direction = pixel_center - self.camera_centre;
-                let ray = Ray::new(self.camera_centre, ray_direction);
     
-                let pixel_color = Camera::ray_color(&ray, &world);
-    
-                // Write pixels from the bottom left, left to right, bottom to top
-                // Needed for WebGL texture sampling later
-                color::write_color(&pixel_color, &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
+                let mut pixel_color = Vector3::new(0.0, 0.0, 0.0);
+
+                for _sample in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(col, row);
+                    pixel_color += Self::ray_color(&ray, &world);
+                }
+
+                color::write_color(&(self.pixel_samples_scale * &pixel_color), &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
             }
         }
     
@@ -37,6 +41,22 @@ impl Camera {
         unsafe {
             TEXTURE = self.texture.clone();
         }
+    }
+
+    fn get_ray(&self, i:u64, j:u64) -> Ray {
+        let offset = Self::sample_square();
+        let pixel_sample = self.pixel_00_loc + ((i as f64 + offset.x) * self.pixel_delta_u)
+                            + ((j as f64 + offset.y) * self.pixel_delta_v);
+
+        let ray_origin = self.camera_centre;
+        let ray_direction = pixel_sample - ray_origin;
+
+        return Ray::new(ray_origin, ray_direction);
+    }
+
+    fn sample_square() -> Vector3<f64> {
+        // return Vector3::new(0.5, 0.5, 0.0);
+        return Vector3::new(fastrand::f64() - 0.5, fastrand::f64() - 0.5, 0.0);
     }
 
     fn initialise(&mut self) {
@@ -75,8 +95,11 @@ impl Default for Camera {
         let aspect_ratio = 16.0/9.0;
         let image_height = 1440;
         let image_width = (aspect_ratio * image_height as f64) as u64;
+        let samples_per_pixel = 4;
+        let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
 
         return Camera{
+            samples_per_pixel,
             aspect_ratio,
             image_width,
             image_height,
@@ -85,6 +108,7 @@ impl Default for Camera {
             pixel_00_loc: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_v: Vector3::new(0.0, 0.0, 0.0),
+            pixel_samples_scale
         }
     }
 }
