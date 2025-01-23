@@ -1,13 +1,14 @@
 use nalgebra::Vector3;
-use rand::Rng;
 
-use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::{HitRecord, SceneObject}, TEXTURE};
+use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::{HitRecord, SceneObject}, vector_utils, TEXTURE};
 
 pub struct Camera {
+    #[allow(dead_code)]
     pub aspect_ratio: f64,
     pub image_width: u64,
     pub image_height: u64,
     pub samples_per_pixel: u64,
+    pub max_depth: u64,
 
     pixel_samples_scale:f64,
     camera_centre: Vector3<f64>,
@@ -23,14 +24,11 @@ impl Camera {
 
         for row in 0..self.image_height {
             for col in 0..self.image_width {
-                let pixel_center = self.pixel_00_loc + (self.pixel_delta_u.component_mul(&Vector3::from_element(col as f64)))
-                                    + (self.pixel_delta_v.component_mul(&Vector3::from_element(row as f64)));
-    
                 let mut pixel_color = Vector3::new(0.0, 0.0, 0.0);
 
                 for _sample in 0..self.samples_per_pixel {
                     let ray = self.get_ray(col, row);
-                    pixel_color += Self::ray_color(&ray, &world);
+                    pixel_color += Self::ray_color(&ray, &world, self.max_depth);
                 }
 
                 color::write_color(&(self.pixel_samples_scale * &pixel_color), &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
@@ -77,11 +75,16 @@ impl Camera {
         self.pixel_00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);        
     }
 
-    fn ray_color(ray: &Ray, world: &ObjectList) -> Vector3<f64> {
+    fn ray_color(ray: &Ray, world: &ObjectList, depth: u64) -> Vector3<f64> {
+        if depth <= 0 {
+            return Vector3::new(0.0, 0.0, 0.0);
+        }
+
         let mut record = HitRecord::default();
 
-        if world.hit(ray, interval::Interval::new(0.0, std::f64::INFINITY), &mut record) {
-            return 0.5 * (record.normal + Vector3::new(1.0, 1.0, 1.0));
+        if world.hit(ray, interval::Interval::new(0.001, std::f64::INFINITY), &mut record) {
+            let direction = vector_utils::random_vec3_hemisphere(&record.normal);
+            return 0.5 * Self::ray_color(&Ray::new(record.point, direction), world, depth - 1);
         }
 
         let unit_direction = nalgebra::UnitVector3::new_normalize(ray.direction());
@@ -108,7 +111,8 @@ impl Default for Camera {
             pixel_00_loc: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_v: Vector3::new(0.0, 0.0, 0.0),
-            pixel_samples_scale
+            pixel_samples_scale,
+            max_depth: 8,
         }
     }
 }

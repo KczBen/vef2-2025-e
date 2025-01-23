@@ -5,6 +5,7 @@ mod sphere;
 mod object_list;
 mod interval;
 mod camera;
+mod vector_utils;
 
 use camera::Camera;
 use wasm_bindgen::prelude::*;
