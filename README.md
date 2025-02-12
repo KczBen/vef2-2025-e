@@ -13,7 +13,7 @@ This assignment is simply the perfect excuse to write something in Rust while le
 
 ### Golas
 The primary goal of the project is to explore the viability of a primarily WebAssembly based, computationally heavy project that runs entirely locally. This includes:
-* Performance
+* Focus on performance
 * Testing and CI - Tools that integrate well both with Rust and JavaScript
     * Debugging and benchmarking tools are of special interest here
 * No reliance on Node.js
