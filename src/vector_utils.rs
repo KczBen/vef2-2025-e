@@ -17,7 +17,7 @@ fn random_vec3_range(min: f64, max: f64) -> Vector3<f64> {
     return Vector3::new(random_f64_range(min, max), random_f64_range(min, max), random_f64_range(min, max));
 }
 
-fn random_vec3_unit() -> Vector3<f64>  {
+pub fn random_vec3_unit() -> Vector3<f64>  {
     loop {
         let p = random_vec3_range(-1.0, 1.0);
         let len_sqr = p.norm_squared();
