@@ -25,7 +25,7 @@ function webglSetup() {
     if (!gl) { alert("WebGL isn't available"); }
 
     const vShaderCode =
-    `#version 300 es
+    /* glsl */ `#version 300 es
     precision mediump float;
 
     out vec2 texcoords;
@@ -41,7 +41,7 @@ function webglSetup() {
     }`
 
     const fShaderCode =
-    `#version 300 es
+    /* glsl */ `#version 300 es
     precision mediump float;
 
     in vec2 texcoords;
