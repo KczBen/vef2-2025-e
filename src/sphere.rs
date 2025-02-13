@@ -1,5 +1,8 @@
 pub mod sphere {
+    use std::sync::Arc;
+
     use crate::interval::Interval;
+    use crate::material::Material;
     use crate::scene_object::scene_object::HitRecord;
     use crate::ray::ray;
     use nalgebra::Vector3;
@@ -8,19 +11,21 @@ pub mod sphere {
     pub struct Sphere {
         centre: Vector3<f64>,
         radius: f64,
+        material: Arc<dyn Material>
     }
 
     impl Sphere {
-        pub fn new(centre: Vector3<f64>, radius: f64) -> Self {
+        pub fn new(centre: Vector3<f64>, radius: f64, material: Arc<dyn Material>) -> Self {
             Sphere {
                 centre,
                 radius: radius.max(0.0),
+                material,
             }
         }
     }
 
     impl SceneObject for Sphere {
-        fn hit(&self, ray: &ray::Ray, ray_t: Interval, record: &mut HitRecord) -> bool {
+        fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord> {
             let oc = self.centre - ray.origin();
             let a = ray.direction().norm().powi(2);
             let h = nalgebra::Vector::dot(&ray.direction(), &oc);
@@ -29,7 +34,7 @@ pub mod sphere {
             let discriminant = h * h - a * c;
 
             if discriminant < 0.0 {
-                return false;
+                return None;
             }
 
             let discriminant_sqrt = discriminant.sqrt();
@@ -38,16 +43,16 @@ pub mod sphere {
             if !ray_t.surrounds(root) {
                 root = (h + discriminant_sqrt) / a;
                 if !ray_t.surrounds(root) {
-                    return false;
+                    return None;
                 }
             }
 
-            record.t = root;
-            record.point = ray.at(record.t);
-            let outward_normal = (record.point - self.centre) / self.radius;
-            record.set_face_normal(ray, &outward_normal);
+            let t = root;
+            let point = ray.at(t);
+            let normal = (point - self.centre) / self.radius;
+            let material = self.material.clone();
 
-            return true;
+            return Some(HitRecord { point, normal, material, t });
         }
     }
 }

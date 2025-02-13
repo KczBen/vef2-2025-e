@@ -1,6 +1,6 @@
 use nalgebra::Vector3;
 
-use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::{HitRecord, SceneObject}, vector_utils, TEXTURE};
+use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, vector_utils, TEXTURE};
 
 pub struct Camera {
     #[allow(dead_code)]
@@ -80,11 +80,15 @@ impl Camera {
             return Vector3::new(0.0, 0.0, 0.0);
         }
 
-        let mut record = HitRecord::default();
+        if let Some(hit) = world.hit(ray, interval::Interval::new(0.001, std::f64::INFINITY)) {
+            // let direction = hit.normal + vector_utils::random_vec3_unit();
+            // return 0.5 * Self::ray_color(&Ray::new(hit.point, direction), world, depth - 1);
+            let mut scattered: Ray = Ray::default();
+            let mut attenuation = Vector3::default();
 
-        if world.hit(ray, interval::Interval::new(0.001, std::f64::INFINITY), &mut record) {
-            let direction = record.normal + vector_utils::random_vec3_unit();
-            return 0.5 * Self::ray_color(&Ray::new(record.point, direction), world, depth - 1);
+            if hit.material.scatter(ray, &hit, &mut attenuation, &mut scattered) {
+                return Self::ray_color(&scattered, world, depth-1).component_mul(&attenuation);
+            }
         }
 
         let unit_direction = nalgebra::UnitVector3::new_normalize(ray.direction());

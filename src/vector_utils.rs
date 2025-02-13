@@ -13,10 +13,12 @@ fn random_vec3() -> Vector3<f64> {
     return Vector3::new(f64(), f64(), f64());
 }
 
+#[inline(always)]
 fn random_vec3_range(min: f64, max: f64) -> Vector3<f64> {
     return Vector3::new(random_f64_range(min, max), random_f64_range(min, max), random_f64_range(min, max));
 }
 
+#[inline(always)]
 pub fn random_vec3_unit() -> Vector3<f64>  {
     loop {
         let p = random_vec3_range(-1.0, 1.0);
@@ -28,6 +30,8 @@ pub fn random_vec3_unit() -> Vector3<f64>  {
     }
 }
 
+#[allow(dead_code)]
+#[inline(always)]
 pub fn random_vec3_hemisphere(normal: &Vector3<f64>) -> Vector3<f64> {
     let vec3_on_unit_sphere = random_vec3_unit();
 
@@ -38,4 +42,15 @@ pub fn random_vec3_hemisphere(normal: &Vector3<f64>) -> Vector3<f64> {
     else {
         return -1.0 * vec3_on_unit_sphere;
     }
+}
+
+#[inline(always)]
+pub fn near_zero(vector: Vector3<f64>) -> bool {
+    let s = 1e-8;
+    return vector.x < s && vector.y < s && vector.z < s;
+}
+
+#[inline(always)]
+pub fn reflect(vector: Vector3<f64 >, normal: Vector3<f64>) -> Vector3<f64> {
+    return vector - 2.0 * Vector3::dot(&vector, &normal) * normal;
 }

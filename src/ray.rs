@@ -1,6 +1,7 @@
 pub mod ray {
     use nalgebra::Vector3;
 
+    #[derive(Default)]
     pub struct Ray {
         origin: Vector3<f64>,
         direction: Vector3<f64>,
