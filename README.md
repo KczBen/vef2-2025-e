@@ -9,10 +9,10 @@ This project came about for three main reasons:
 * I'm curious about the state of WebAssembly
 * I want to learn how path tracing works
 
-This assignment is simply the perfect excuse to write something in Rust while learning about something I'm interested in. 
+This assignment is simply the perfect excuse to write more code in Rust while learning about something I'm interested in. 
 
 ### Goals
-The primary goal of the project is to explore the viability of a primarily WebAssembly based, computationally heavy project that runs entirely locally. This includes:
+The primary goal of the project is to explore the viability of a WebAssembly based, computationally heavy project that runs entirely locally. This includes:
 * Focus on performance
 * Testing and CI - Tools that integrate well both with Rust and JavaScript
     * Debugging and benchmarking tools are of particular interest
@@ -42,11 +42,14 @@ Weeks are from the project start date.
 | Week 4 | Front end functionality - Camera movement, rendering options |
 | Week 5 | Final report |
 
-Stretch goals (if possible): Multi-threading, SIMD, second path tracing book.
+Stretch goals (if possible): Multi-threading, SIMD, second book of the series.
 ## Plan
-* 50% Researching WebAssembly tools in Rust - Building, bindgen and utility crates
+Subject to change
+
+This roughly represents the effort put into the project *besides the path tracing code*. I'm just doing that part for fun.
+* 50% Researching WebAssembly capabilities
 * 30% Integration with JavaScript
-* 20% JavaScript front end
+* 20% Overall usability - UI, path tracing accuracy (as is in the book)
 
 ## Building
 ### Prerequisites
