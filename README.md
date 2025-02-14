@@ -11,18 +11,18 @@ This project came about for three main reasons:
 
 This assignment is simply the perfect excuse to write something in Rust while learning about something I'm interested in. 
 
-### Golas
+### Goals
 The primary goal of the project is to explore the viability of a primarily WebAssembly based, computationally heavy project that runs entirely locally. This includes:
 * Focus on performance
 * Testing and CI - Tools that integrate well both with Rust and JavaScript
-    * Debugging and benchmarking tools are of special interest here
+    * Debugging and benchmarking tools are of particular interest
 * No reliance on Node.js
 
 ### Background
 Rust is an ideal language as it natively supports WebAssembly building in the form of the `wasm32-unknown-unknown` target, without the need of tools such as [Emscripten](https://github.com/emscripten-core/emscripten).
 
 The project uses `wasm-pack` and `wasm-bindgen` to compile Rust into WebAssembly and generate JavaScript bindings. Some JavaScript is still necessary for a few reasons:
-* WebAssembly has no API access. For this project, this means any user input must go throught JavaScript. This includes showing the image on screen or moving the camera in the scene.
+* WebAssembly has no API access. For this project, this means any user input must go through JavaScript. This includes showing the image on screen or moving the camera in the scene.
 * No DOM access. WebAssembly code has no knowledge of the page layout. JavaScript must be used to observe things such as the canvas size.
 * Browsers require JavaScript. It's simply not possible to load WebAssembly without JavaScript.
 
