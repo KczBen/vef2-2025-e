@@ -19,7 +19,7 @@ The primary goal of the project is to explore the viability of a WebAssembly bas
 * No reliance on Node.js
 
 ### Background
-Rust is an ideal language as it natively supports WebAssembly building in the form of the `wasm32-unknown-unknown` target, without the need of tools such as [Emscripten](https://github.com/emscripten-core/emscripten).
+Rust is an ideal language for this as it natively supports WebAssembly building in the form of the `wasm32-unknown-unknown` target, without the need of tools such as [Emscripten](https://github.com/emscripten-core/emscripten).
 
 The project uses `wasm-pack` and `wasm-bindgen` to compile Rust into WebAssembly and generate JavaScript bindings. Some JavaScript is still necessary for a few reasons:
 * WebAssembly has no API access. For this project, this means any user input must go through JavaScript. This includes showing the image on screen or moving the camera in the scene.
