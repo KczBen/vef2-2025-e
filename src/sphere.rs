@@ -49,10 +49,12 @@ pub mod sphere {
 
             let t = root;
             let point = ray.at(t);
-            let normal = (point - self.centre) / self.radius;
+            let outward_normal = (point - self.centre) / self.radius;
+            let front_face = ray.direction().dot(&outward_normal) < 0.0;
+            let normal = if front_face { outward_normal } else { -outward_normal };
             let material = self.material.clone();
 
-            return Some(HitRecord { point, normal, material, t });
+            return Some(HitRecord { point, normal, material, t, front_face });
         }
     }
 }

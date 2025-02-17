@@ -1,6 +1,6 @@
 // Some extras on top of Nalgebra and fastrand
 
-use nalgebra::Vector3;
+use nalgebra::{Normed, Vector, Vector3};
 use fastrand::f64;
 
 fn random_f64_range(min: f64, max: f64) -> f64 {
@@ -61,6 +61,14 @@ pub fn near_zero(vector: Vector3<f64>) -> bool {
 }
 
 #[inline(always)]
-pub fn reflect(vector: Vector3<f64 >, normal: Vector3<f64>) -> Vector3<f64> {
+pub fn reflect(vector: &Vector3<f64 >, normal: &Vector3<f64>) -> Vector3<f64> {
     return vector - 2.0 * Vector3::dot(&vector, &normal) * normal;
+}
+
+#[inline(always)]
+pub fn refract(uv: &Vector3<f64>, n: &Vector3<f64>, etai_over_etat: f64) -> Vector3<f64> {
+    let cost_theta = f64::min(-uv.dot(n), 1.0);
+    let r_out_perp = etai_over_etat * (uv + cost_theta * n);
+    let r_out_parallel = -f64::sqrt(f64::abs(1.0 - r_out_perp.norm_squared())) * n;
+    return r_out_perp + r_out_parallel;
 }

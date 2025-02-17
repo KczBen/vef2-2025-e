@@ -39,14 +39,17 @@ fn main() {
 
     let material_ground = Arc::new(material::Lambertian::new(Vector3::new(0.8,0.8,0.0)));
     let material_center = Arc::new(material::Lambertian::new(Vector3::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(material::Metal::new(Vector3::new(0.8, 0.8, 0.8), 0.0));
-    let material_right = Arc::new(material::Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.0));
+    let material_left = Arc::new(material::Dielectric::new(1.5));
+    let material_bubble = Arc::new(material::Dielectric::new(1.0 / 1.5));
+    let material_right = Arc::new(material::Metal::new(Vector3::new(0.8, 0.6, 0.2), 1.0));
     
     let object_binding = sphere::sphere::Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0, material_ground);
     world.add(&object_binding);
     let object_binding = sphere::sphere::Sphere::new(Vector3::new(0.0, 0.0, -1.2), 0.5, material_center);
     world.add(&object_binding);
     let object_binding = sphere::sphere::Sphere::new(Vector3::new(-1.0, 0.0, -1.0), 0.5, material_left);
+    world.add(&object_binding);
+    let object_binding = sphere::sphere::Sphere::new(Vector3::new(-1.0, 0.0, -1.0), 0.4, material_bubble);
     world.add(&object_binding);
     let object_binding = sphere::sphere::Sphere::new(Vector3::new(1.0, 0.0, -1.0), 0.5, material_right);
     world.add(&object_binding);

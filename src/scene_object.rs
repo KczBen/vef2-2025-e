@@ -11,7 +11,7 @@ pub mod scene_object {
         pub normal: Vector3<f64>,
         pub material: Arc<dyn Material>,
         pub t: f64,
-        //pub front_face: bool,
+        pub front_face: bool,
     }
 
     impl HitRecord {
@@ -33,7 +33,7 @@ pub mod scene_object {
                 normal: Vector3::new(0.0, 0.0, 0.0),
                 material,
                 t: 0.0,
-                //front_face: false
+                front_face: false
             }
         }
     }
