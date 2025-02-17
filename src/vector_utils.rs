@@ -30,6 +30,16 @@ pub fn random_vec3_unit() -> Vector3<f64>  {
     }
 }
 
+#[inline(always)]
+pub fn random_vec3_sphere() -> Vector3<f64> {
+    loop {
+        let p = random_vec3_range(-1.0, 1.0);
+        if p.norm_squared() < 1.0 {
+            return p;
+        }
+    }
+}
+
 #[allow(dead_code)]
 #[inline(always)]
 pub fn random_vec3_hemisphere(normal: &Vector3<f64>) -> Vector3<f64> {

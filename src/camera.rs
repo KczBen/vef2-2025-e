@@ -19,6 +19,12 @@ pub struct Camera {
 }
 
 impl Camera {
+    pub fn set_resolution(&mut self, width: u64, height: u64) {
+        self.image_width = width;
+        self.image_height = height;
+        self.aspect_ratio = width as f64 / height as f64;
+    }
+    
     pub fn render(&mut self, world: ObjectList) {
         self.initialise();
 
