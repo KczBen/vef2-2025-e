@@ -31,7 +31,9 @@ For the above reasons, the code is roughly split so that JavaScript takes care o
 Communication between JavaScript and WebAssembly is handled via shared memory to minimise overhead.
 
 ## Timeline
-Current priority is to implement all of [the first book](https://raytracing.github.io/books/RayTracingInOneWeekend.html) in Rust. It is about 60% done so far.
+The path tracer in the first book is now fully implemented in Rust.
+
+Next priority is performance. Target is 30FPS (33ms render time) on an 8-core AMD Ryzen 7 5800X CPU.
 
 Weeks are from the project start date.
 
