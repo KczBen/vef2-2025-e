@@ -10,11 +10,19 @@ pub struct Camera {
     pub samples_per_pixel: u64,
     pub max_depth: u64,
 
+    pub fov_vertical: f64,
+    pub location: Vector3<f64>,
+    pub look_at: Vector3<f64>,
+    pub up: Vector3<f64>,
+
     pixel_samples_scale:f64,
     camera_centre: Vector3<f64>,
     pixel_00_loc: Vector3<f64>,
     pixel_delta_u: Vector3<f64>, 
-    pixel_delta_v: Vector3<f64>, 
+    pixel_delta_v: Vector3<f64>,
+    u: Vector3<f64>,
+    v: Vector3<f64>,
+    w: Vector3<f64>,    
     texture: Vec<u8>, 
 }
 
@@ -64,20 +72,25 @@ impl Camera {
     }
 
     fn initialise(&mut self) {
-        let focal_length = 1.0;
-        let viewport_height = 2.0;
-        let viewport_width = viewport_height * ((self.image_width as f64)/self.image_height as f64);
-        self.camera_centre = Vector3::new(0.0, 0.0, 0.0);
+        self.camera_centre = self.location;
+        let focal_length = (self.location - self.look_at).norm();
+        let theta = self.fov_vertical.to_radians();
+        let h = f64::tan(theta/2.0);
 
-        let viewport_u = Vector3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vector3::new(0.0, -viewport_height, 0.0);
+        let viewport_height = 2.0 * h * focal_length;
+        let viewport_width = viewport_height * ((self.image_width as f64)/self.image_height as f64);
+
+        self.w = (self.location - self.look_at).normalize();
+        self.u = (self.up.cross(&self.w)).normalize();
+        self.v = self.w.cross(&self.u);
+
+        let viewport_u = viewport_width * self.u;
+        let viewport_v = viewport_height * -self.v;
         
         self.pixel_delta_u = viewport_u.component_div(&Vector3::from_element(self.image_width as f64));
         self.pixel_delta_v = viewport_v.component_div(&Vector3::from_element(self.image_height as f64));
 
-        let viewport_upper_left = self.camera_centre - Vector3::new(0.0, 0.0, focal_length)
-                                    - viewport_u.component_div(&Vector3::from_element(2.0)) - viewport_v.component_div(&Vector3::from_element(2.0));
-
+        let viewport_upper_left = self.camera_centre - (focal_length * self.w) - viewport_u/2.0 - viewport_v/2.0; 
         self.pixel_00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);        
     }
 
@@ -123,6 +136,13 @@ impl Default for Camera {
             pixel_delta_v: Vector3::new(0.0, 0.0, 0.0),
             pixel_samples_scale,
             max_depth: 8,
+            fov_vertical: 90.0,
+            location: Vector3::new(0.0, 0.0, 0.0),
+            look_at: Vector3::new(0.0, 0.0, -1.0),
+            up: Vector3::new(0.0, 1.0, 0.0),
+            u: Vector3::new(0.0, 0.0, 0.0),
+            v: Vector3::new(0.0, 0.0, 0.0),
+            w: Vector3::new(0.0, 0.0, 0.0),
         }
     }
 }

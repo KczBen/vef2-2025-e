@@ -8,7 +8,7 @@ mod camera;
 mod vector_utils;
 mod material;
 
-use std::sync::Arc;
+use std::{f64::consts::PI, sync::Arc};
 
 use camera::Camera;
 use material::Material;
@@ -55,6 +55,8 @@ fn main() {
     world.add(&object_binding);
 
     let mut camera = Camera::default();
+    camera.location = Vector3::new(-2.0, 2.0, 1.0);
+    camera.look_at = Vector3::new(0.0, 0.0, -1.0);
     camera.render(world);
 }
 
