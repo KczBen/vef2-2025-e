@@ -1,6 +1,4 @@
 use nalgebra::Vector3;
-use rand_xorshift::XorShiftRng;
-use wasm_bindgen_futures::js_sys::Math::cos;
 
 // I would prefer a BSDF but this *is* simpler as it is in the book
 use crate::{ray::ray::Ray, scene_object::scene_object::HitRecord, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}};
@@ -21,7 +19,7 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3<f32>, scattered_ray: &mut Ray) -> bool {
+    fn scatter(&self, _incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3<f32>, scattered_ray: &mut Ray) -> bool {
         let mut scatter_dicretion = hit_record.normal + random_vec3_unit();
 
         if near_zero(scatter_dicretion) {

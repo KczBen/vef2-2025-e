@@ -1,6 +1,6 @@
 use nalgebra::Vector3;
 
-use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, vector_utils, TEXTURE};
+use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, TEXTURE};
 
 pub struct Camera {
     #[allow(dead_code)]
