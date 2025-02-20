@@ -1,4 +1,5 @@
 use nalgebra::Vector3;
+use rand_xorshift::XorShiftRng;
 use wasm_bindgen_futures::js_sys::Math::cos;
 
 // I would prefer a BSDF but this *is* simpler as it is in the book
