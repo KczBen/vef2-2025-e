@@ -3,7 +3,7 @@ use nalgebra::Vector3;
 use crate::interval::Interval;
 
 #[inline(always)]
-fn linear_to_gamma(linear_component: f64) -> f64 {
+fn linear_to_gamma(linear_component: f32) -> f32 {
     if linear_component > 0.0 {
         return linear_component.sqrt();
     }
@@ -11,7 +11,7 @@ fn linear_to_gamma(linear_component: f64) -> f64 {
     return 0.0;
 }
 
-pub fn write_color(pixel_color: &Vector3<f64>, texture: &mut Vec<u8>, pixel_index: usize) {
+pub fn write_color(pixel_color: &Vector3<f32>, texture: &mut Vec<u8>, pixel_index: usize) {
     let r = linear_to_gamma(pixel_color[0]);
     let g = linear_to_gamma(pixel_color[1]);
     let b = linear_to_gamma(pixel_color[2]);

@@ -9,13 +9,13 @@ pub mod sphere {
     use crate::scene_object::scene_object::SceneObject;
 
     pub struct Sphere {
-        centre: Vector3<f64>,
-        radius: f64,
+        centre: Vector3<f32>,
+        radius: f32,
         material: Arc<dyn Material>
     }
 
     impl Sphere {
-        pub fn new(centre: Vector3<f64>, radius: f64, material: Arc<dyn Material>) -> Self {
+        pub fn new(centre: Vector3<f32>, radius: f32, material: Arc<dyn Material>) -> Self {
             Sphere {
                 centre,
                 radius: radius.max(0.0),
