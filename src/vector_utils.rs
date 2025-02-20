@@ -1,6 +1,6 @@
 // Some extras on top of Nalgebra and fastrand
 
-use nalgebra::{Normed, Vector, Vector3};
+use nalgebra::Vector3;
 use fastrand::f32;
 
 fn random_f32_range(min: f32, max: f32) -> f32 {

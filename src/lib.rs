@@ -9,12 +9,11 @@ mod vector_utils;
 mod material;
 mod vector3;
 
-use std::{f32::consts::PI, sync::Arc};
+use std::sync::Arc;
 
 use camera::Camera;
-use material::Material;
 use wasm_bindgen::prelude::*;
-use nalgebra::{Vector, Vector3};
+use nalgebra::Vector3;
 
 #[wasm_bindgen]
 extern "C" {
