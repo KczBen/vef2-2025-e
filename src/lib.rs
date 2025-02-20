@@ -7,6 +7,7 @@ mod interval;
 mod camera;
 mod vector_utils;
 mod material;
+mod vector3;
 
 use std::{f32::consts::PI, sync::Arc};
 
