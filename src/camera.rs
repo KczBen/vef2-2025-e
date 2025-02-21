@@ -88,7 +88,7 @@ impl Camera {
         let viewport_v = viewport_height * -1.0 * self.v;
 
         self.pixel_delta_u = viewport_u / Vector3::new(self.image_width as f32, self.image_width as f32, self.image_width as f32);
-        self.pixel_delta_v = viewport_v / Vector3::new(self.image_height as f32, self.image_width as f32, self.image_width as f32);
+        self.pixel_delta_v = viewport_v / Vector3::new(self.image_height as f32, self.image_height as f32, self.image_height as f32);
 
 
         let viewport_upper_left = self.camera_centre - (focal_length * self.w) - viewport_u/2.0 - viewport_v/2.0; 
