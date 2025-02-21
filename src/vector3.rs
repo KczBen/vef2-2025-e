@@ -1,6 +1,7 @@
-use std::arch::wasm32::{f32x4, f32x4_add, f32x4_div, f32x4_extract_lane, f32x4_mul, f32x4_splat, f32x4_sqrt, f32x4_sub, i32x4_shuffle, v128};
+use std::{arch::wasm32::{f32x4, f32x4_add, f32x4_div, f32x4_eq, f32x4_extract_lane, f32x4_mul, f32x4_splat, f32x4_sqrt, f32x4_sub, i32x4_shuffle, v128}, f32::NAN};
 
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct Vector3(v128);
 
 impl Vector3 {
@@ -81,18 +82,18 @@ impl Vector3 {
 
         // Re-arrange left side for multiplication
         // y, z, x, w
-        let left_shuffle = unsafe { i32x4_shuffle::<1, 3, 0, 4>(self.0, self.0) };
+        let left_shuffle = unsafe { i32x4_shuffle::<1, 2, 0, 3>(self.0, self.0) };
         // Right side
         // z, x, y, w
-        let right_shuffle = unsafe { i32x4_shuffle::<3, 0, 1, 4>(rhs.0, rhs.0) };
+        let right_shuffle = unsafe { i32x4_shuffle::<2, 0, 1, 3>(rhs.0, rhs.0) };
 
         let mul_left = unsafe { f32x4_mul(left_shuffle, right_shuffle) };
 
         // Right hand side of subtraction
         // l.z * r.y, l.x * r.z, l.y * r.x
 
-        let left_shuffle = unsafe { i32x4_shuffle::<2, 0, 1, 4>(self.0, self.0) };
-        let right_shuffle = unsafe { i32x4_shuffle::<1, 2, 0, 4>(rhs.0, rhs.0) };
+        let left_shuffle = unsafe { i32x4_shuffle::<2, 0, 1, 3>(self.0, self.0) };
+        let right_shuffle = unsafe { i32x4_shuffle::<1, 2, 0, 3>(rhs.0, rhs.0) };
 
         let mul_right = unsafe { f32x4_mul(left_shuffle, right_shuffle) };
 
@@ -179,5 +180,18 @@ impl std::ops::Sub<Vector3> for Vector3 {
 impl Default for Vector3 {
     fn default() -> Self {
         return Self(unsafe { f32x4_splat(0.0) });
+    }
+}
+
+impl PartialEq for Vector3 {
+    fn eq(&self, other: &Self) -> bool {
+        let equality_vec = unsafe { f32x4_eq(self.0, other.0) };
+        let eq0 = unsafe { f32x4_extract_lane::<0>(equality_vec) };
+        let eq1 = unsafe { f32x4_extract_lane::<1>(equality_vec) };
+        let eq2 = unsafe { f32x4_extract_lane::<2>(equality_vec) };
+        let eq3 = unsafe { f32x4_extract_lane::<3>(equality_vec) };
+
+        // all 1s, so it will be NAN
+        return !(eq0 == NAN || eq1 == NAN || eq2 == NAN || eq3 == NAN);
     }
 }

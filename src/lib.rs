@@ -7,7 +7,7 @@ mod interval;
 mod camera;
 mod vector_utils;
 mod material;
-mod vector3;
+pub mod vector3;
 
 use std::sync::Arc;
 
