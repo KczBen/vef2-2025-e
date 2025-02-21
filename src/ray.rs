@@ -24,7 +24,7 @@ pub mod ray {
         }
 
         pub fn at(&self, t:f32) -> Vector3 {
-            return self.origin + t * self.direction
+            return self.origin + t * self.direction;
         }
     }
 }

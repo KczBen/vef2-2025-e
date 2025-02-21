@@ -4,7 +4,7 @@ use std::{arch::wasm32::{f32x4, f32x4_add, f32x4_div, f32x4_eq, f32x4_extract_la
 
 #[derive(Clone, Copy)]
 #[derive(Debug)]
-pub struct Vector3(v128);
+pub struct Vector3(pub v128);
 
 impl Vector3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {

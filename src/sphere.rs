@@ -27,9 +27,9 @@ pub mod sphere {
     impl SceneObject for Sphere {
         fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord> {
             let oc = self.centre - ray.origin();
-            let a = ray.direction().norm().powi(2);
+            let a = ray.direction().norm_squared();
             let h = Vector3::dot(ray.direction(), oc);
-            let c = oc.norm().powi(2) - self.radius * self.radius;
+            let c = oc.norm_squared() - self.radius * self.radius;
 
             let discriminant = h * h - a * c;
 
