@@ -25,7 +25,7 @@ pub fn random_vec3_unit() -> Vector3<f32>  {
         let len_sqr = p.norm_squared();
 
         if 1e-160 < len_sqr && len_sqr <= 1.0 {
-            return p / len_sqr.sqrt();
+            return p.normalize();
         }
     }
 }
