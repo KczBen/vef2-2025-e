@@ -1,30 +1,30 @@
 pub mod ray {
-    use nalgebra::Vector3;
+    use crate::vector3::Vector3;
 
     #[derive(Default)]
     pub struct Ray {
-        origin: Vector3<f32>,
-        direction: Vector3<f32>,
+        origin: Vector3,
+        direction: Vector3,
     }
 
     impl Ray {
-        pub fn origin(&self) -> Vector3<f32> {
+        pub fn origin(&self) -> Vector3 {
             self.origin
         }
 
-        pub fn direction(&self)-> Vector3<f32>{
+        pub fn direction(&self)-> Vector3 {
             self.direction
         }
 
-        pub fn new(origin:Vector3<f32>, direction: Vector3<f32>) -> Ray {
+        pub fn new(origin:Vector3, direction: Vector3) -> Ray {
             Ray{
                 origin,
                 direction,
             }
         }
 
-        pub fn at(&self, t:f32) -> Vector3<f32> {
-            self.origin + t * self.direction
+        pub fn at(&self, t:f32) -> Vector3 {
+            return self.origin + t * self.direction
         }
     }
 }

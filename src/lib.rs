@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use camera::Camera;
 use wasm_bindgen::prelude::*;
-use nalgebra::Vector3;
+use crate::vector3::Vector3;
 
 #[wasm_bindgen]
 extern "C" {

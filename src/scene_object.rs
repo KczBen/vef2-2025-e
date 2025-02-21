@@ -1,21 +1,19 @@
 pub mod scene_object {
     use std::sync::Arc;
 
-    use nalgebra::Vector3;
-
-    use crate::{interval::Interval, material::Material, ray::ray};
+    use crate::{interval::Interval, material::Material, ray::ray, vector3::Vector3};
 
     #[derive(Clone)]
     pub struct HitRecord {
-        pub point: Vector3<f32>,
-        pub normal: Vector3<f32>,
+        pub point: Vector3,
+        pub normal: Vector3,
         pub material: Arc<dyn Material>,
         pub t: f32,
         pub front_face: bool,
     }
 
     impl HitRecord {
-        /*pub fn set_face_normal(&mut self, ray: &ray::Ray, out_normal: &Vector3<f32>) {
+        /*pub fn set_face_normal(&mut self, ray: &ray::Ray, out_normal: &Vector3) {
             self.front_face = nalgebra::Vector::dot(&ray.direction(), &out_normal) < 0.0;
             
             if self.front_face {

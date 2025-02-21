@@ -5,17 +5,17 @@ pub mod sphere {
     use crate::material::Material;
     use crate::scene_object::scene_object::HitRecord;
     use crate::ray::ray;
-    use nalgebra::Vector3;
     use crate::scene_object::scene_object::SceneObject;
+    use crate::vector3::Vector3;
 
     pub struct Sphere {
-        centre: Vector3<f32>,
+        centre: Vector3,
         radius: f32,
         material: Arc<dyn Material>
     }
 
     impl Sphere {
-        pub fn new(centre: Vector3<f32>, radius: f32, material: Arc<dyn Material>) -> Self {
+        pub fn new(centre: Vector3, radius: f32, material: Arc<dyn Material>) -> Self {
             Sphere {
                 centre,
                 radius: radius.max(0.0),
@@ -28,7 +28,7 @@ pub mod sphere {
         fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord> {
             let oc = self.centre - ray.origin();
             let a = ray.direction().norm().powi(2);
-            let h = nalgebra::Vector::dot(&ray.direction(), &oc);
+            let h = Vector3::dot(ray.direction(), oc);
             let c = oc.norm().powi(2) - self.radius * self.radius;
 
             let discriminant = h * h - a * c;
@@ -50,8 +50,8 @@ pub mod sphere {
             let t = root;
             let point = ray.at(t);
             let outward_normal = (point - self.centre) / self.radius;
-            let front_face = ray.direction().dot(&outward_normal) < 0.0;
-            let normal = if front_face { outward_normal } else { -outward_normal };
+            let front_face = ray.direction().dot(outward_normal) < 0.0;
+            let normal = if front_face { outward_normal } else { -1.0 * outward_normal };
             let material = self.material.clone();
 
             return Some(HitRecord { point, normal, material, t, front_face });

@@ -1,4 +1,4 @@
-use nalgebra::Vector3;
+use crate::vector3::Vector3;
 
 use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, TEXTURE};
 
@@ -11,18 +11,18 @@ pub struct Camera {
     pub max_depth: u64,
 
     pub fov_vertical: f32,
-    pub location: Vector3<f32>,
-    pub look_at: Vector3<f32>,
-    pub up: Vector3<f32>,
+    pub location: Vector3,
+    pub look_at: Vector3,
+    pub up: Vector3,
 
     pixel_samples_scale:f32,
-    camera_centre: Vector3<f32>,
-    pixel_00_loc: Vector3<f32>,
-    pixel_delta_u: Vector3<f32>, 
-    pixel_delta_v: Vector3<f32>,
-    u: Vector3<f32>,
-    v: Vector3<f32>,
-    w: Vector3<f32>,    
+    camera_centre: Vector3,
+    pixel_00_loc: Vector3,
+    pixel_delta_u: Vector3, 
+    pixel_delta_v: Vector3,
+    u: Vector3,
+    v: Vector3,
+    w: Vector3,    
     texture: Vec<u8>, 
 }
 
@@ -45,7 +45,7 @@ impl Camera {
                     pixel_color += Self::ray_color(&ray, &world, self.max_depth);
                 }
 
-                color::write_color(&(self.pixel_samples_scale * &pixel_color), &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
+                color::write_color(self.pixel_samples_scale * pixel_color, &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
             }
         }
     
@@ -57,8 +57,8 @@ impl Camera {
 
     fn get_ray(&self, i:u64, j:u64) -> Ray {
         let offset = Self::sample_square();
-        let pixel_sample = self.pixel_00_loc + ((i as f32 + offset.x) * self.pixel_delta_u)
-                            + ((j as f32 + offset.y) * self.pixel_delta_v);
+        let pixel_sample = self.pixel_00_loc + ((i as f32 + offset.x()) * self.pixel_delta_u)
+                            + ((j as f32 + offset.y()) * self.pixel_delta_v);
 
         let ray_origin = self.camera_centre;
         let ray_direction = pixel_sample - ray_origin;
@@ -66,7 +66,7 @@ impl Camera {
         return Ray::new(ray_origin, ray_direction);
     }
 
-    fn sample_square() -> Vector3<f32> {
+    fn sample_square() -> Vector3 {
         // return Vector3::new(0.5, 0.5, 0.0);
         return Vector3::new(fastrand::f32() - 0.5, fastrand::f32() - 0.5, 0.0);
     }
@@ -81,20 +81,21 @@ impl Camera {
         let viewport_width = viewport_height * ((self.image_width as f32)/self.image_height as f32);
 
         self.w = (self.location - self.look_at).normalize();
-        self.u = (self.up.cross(&self.w)).normalize();
-        self.v = self.w.cross(&self.u);
+        self.u = (self.up.cross(self.w)).normalize();
+        self.v = self.w.cross(self.u);
 
         let viewport_u = viewport_width * self.u;
-        let viewport_v = viewport_height * -self.v;
-        
-        self.pixel_delta_u = viewport_u.component_div(&Vector3::from_element(self.image_width as f32));
-        self.pixel_delta_v = viewport_v.component_div(&Vector3::from_element(self.image_height as f32));
+        let viewport_v = viewport_height * -1.0 * self.v;
+
+        self.pixel_delta_u = viewport_u / Vector3::new(self.image_width as f32, self.image_width as f32, self.image_width as f32);
+        self.pixel_delta_v = viewport_v / Vector3::new(self.image_height as f32, self.image_width as f32, self.image_width as f32);
+
 
         let viewport_upper_left = self.camera_centre - (focal_length * self.w) - viewport_u/2.0 - viewport_v/2.0; 
         self.pixel_00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);        
     }
 
-    fn ray_color(ray: &Ray, world: &ObjectList, depth: u64) -> Vector3<f32> {
+    fn ray_color(ray: &Ray, world: &ObjectList, depth: u64) -> Vector3 {
         if depth <= 0 {
             return Vector3::new(0.0, 0.0, 0.0);
         }
@@ -106,12 +107,12 @@ impl Camera {
             let mut attenuation = Vector3::default();
 
             if hit.material.scatter(ray, &hit, &mut attenuation, &mut scattered) {
-                return Self::ray_color(&scattered, world, depth-1).component_mul(&attenuation);
+                return Self::ray_color(&scattered, world, depth-1).component_mul(attenuation);
             }
         }
 
-        let unit_direction = nalgebra::UnitVector3::new_normalize(ray.direction());
-        let a = 0.5*unit_direction.y + 1.0;
+        let unit_direction = ray.direction().normalize();
+        let a = 0.5*unit_direction.y() + 1.0;
         return (1.0-a)*Vector3::new(1.0, 1.0, 1.0) + a*Vector3::new(0.5, 0.7, 1.0);
     }
 }
