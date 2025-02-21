@@ -3,18 +3,18 @@
 use crate::vector3::Vector3;
 use fastrand::f32;
 
-fn random_f32_range(min: f32, max: f32) -> f32 {
+pub fn random_f32_range(min: f32, max: f32) -> f32 {
     return fastrand::f32() * (max - min) + min;
 }
 
 // Might be useful later
 #[allow(dead_code)]
-fn random_vec3() -> Vector3 {
+pub fn random_vec3() -> Vector3 {
     return Vector3::new(f32(), f32(), f32());
 }
 
 #[inline(always)]
-fn random_vec3_range(min: f32, max: f32) -> Vector3 {
+pub fn random_vec3_range(min: f32, max: f32) -> Vector3 {
     return Vector3::new(random_f32_range(min, max), random_f32_range(min, max), random_f32_range(min, max));
 }
 
@@ -24,7 +24,7 @@ pub fn random_vec3_unit() -> Vector3  {
         let p = random_vec3_range(-1.0, 1.0);
         let len_sqr = p.norm_squared();
 
-        if 1e-160 < len_sqr && len_sqr <= 1.0 {
+        if 0.0 < len_sqr && len_sqr <= 1.0 {
             return p / len_sqr.sqrt();
         }
     }
@@ -56,7 +56,7 @@ pub fn random_vec3_hemisphere(normal: Vector3) -> Vector3 {
 
 #[inline(always)]
 pub fn near_zero(vector: Vector3) -> bool {
-    let s = 1e-8;
+    let s = 1e-5;
     return vector.x() < s && vector.y() < s && vector.z() < s;
 }
 

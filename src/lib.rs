@@ -5,7 +5,7 @@ mod sphere;
 mod object_list;
 mod interval;
 mod camera;
-mod vector_utils;
+pub mod vector_utils;
 mod material;
 pub mod vector3;
 
