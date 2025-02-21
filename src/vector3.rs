@@ -1,4 +1,6 @@
-use std::{arch::wasm32::{f32x4, f32x4_add, f32x4_div, f32x4_eq, f32x4_extract_lane, f32x4_mul, f32x4_splat, f32x4_sqrt, f32x4_sub, i32x4_shuffle, v128}, f32::NAN};
+// It is in fact not unused, WASM SIMD requires unsafe. Compiler is worong here.
+#![allow(unused_unsafe)]
+use std::{arch::wasm32::{f32x4, f32x4_add, f32x4_div, f32x4_eq, f32x4_extract_lane, f32x4_mul, f32x4_replace_lane, f32x4_splat, f32x4_sqrt, f32x4_sub, i32x4_shuffle, v128}, f32::NAN};
 
 #[derive(Clone, Copy)]
 #[derive(Debug)]
@@ -15,11 +17,12 @@ impl Vector3 {
     pub fn y(self) -> f32 { unsafe { f32x4_extract_lane::<1>(self.0) } }
     #[inline]
     pub fn z(self) -> f32 { unsafe { f32x4_extract_lane::<2>(self.0) } }
+    #[inline]
+    pub fn w(self) -> f32 { unsafe { f32x4_extract_lane::<3>(self.0) } }
 
     pub fn norm(self) -> f32 {
         // x^2, y^2, z^2, w^2 (w is 0)
         let squared = unsafe { f32x4_mul(self.0, self.0) };
-
         // move them into different places
         // New order: z^2, w^2, x^2, y^2
         let shuf1 = unsafe { i32x4_shuffle::<2, 3, 0, 1>(squared, squared) };
@@ -44,31 +47,22 @@ impl Vector3 {
     }
 
     pub fn norm_squared(self) -> f32 {
-        // x^2, y^2, z^2, w^2 (w is 0)
+        // same as norm above, just without the sqrt call
         let squared = unsafe { f32x4_mul(self.0, self.0) };
-
-        // move them into different places
-        // New order: z^2, w^2, x^2, y^2
         let shuf1 = unsafe { i32x4_shuffle::<2, 3, 0, 1>(squared, squared) };
-
-        // add the shuffled and original vectors
-        // (x^2 + z^2), (y^2 + w^2), (z^2 + x^2), (w^2 + y^2)
         let sum1 = unsafe { f32x4_add(squared, shuf1) };
-
-        // reorder again
-        // New order: (y^2 + w^2), (x^2 + z^2), (w^2 + y^2), (z^2 + x^2)
         let shuf2 = unsafe { i32x4_shuffle::<1, 0, 3, 2>(sum1, sum1) };
-
-        // add the results
-        // each lane now holds (x^2 + y^2 + z^2 + w^2)
         let sum_all = unsafe { f32x4_add(sum1, shuf2) };
 
-        // extract one lane (they’re all equal)
         return unsafe { f32x4_extract_lane::<0>(sum_all) }
     }
 
     pub fn normalize(self) -> Vector3 {
         let norm = self.norm();
+        if norm == 0.0 {
+            panic!();
+        }
+
         let inv_norm = 1.0 / norm;
         let inv = unsafe { f32x4_splat(inv_norm) };
         let normalized = unsafe { f32x4_mul(self.0, inv) };
@@ -143,7 +137,9 @@ impl std::ops::Div<Vector3> for Vector3 {
     type Output = Self;
 
     fn div(self, rhs: Vector3) -> Self::Output {
-        return Self(unsafe { f32x4_div(self.0, rhs.0) });
+        // this sets W to NaN, fix it before returning
+        let unsafe_result = unsafe { f32x4_div(self.0, rhs.0) };
+        return Self(unsafe { f32x4_replace_lane::<3>(unsafe_result, 0.0) });
     }
 }
 
