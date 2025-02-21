@@ -26,10 +26,13 @@ pub mod sphere {
 
     impl SceneObject for Sphere {
         fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord> {
+            let dir = ray.direction();
             let oc = self.centre - ray.origin();
-            let a = ray.direction().norm().powi(2);
-            let h = nalgebra::Vector::dot(&ray.direction(), &oc);
-            let c = oc.norm().powi(2) - self.radius * self.radius;
+
+            // Direction is already normalised
+            let a = 1.0;
+            let h = Vector3::dot(&dir, &oc);
+            let c = oc.norm_squared() - self.radius * self.radius;
 
             let discriminant = h * h - a * c;
 
@@ -39,9 +42,9 @@ pub mod sphere {
 
             let discriminant_sqrt = discriminant.sqrt();
 
-            let mut root = (h - discriminant_sqrt) / a;
+            let mut root = h - discriminant_sqrt;
             if !ray_t.surrounds(root) {
-                root = (h + discriminant_sqrt) / a;
+                root = h + discriminant_sqrt;
                 if !ray_t.surrounds(root) {
                     return None;
                 }

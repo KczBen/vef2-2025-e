@@ -26,7 +26,7 @@ impl Material for Lambertian {
             scatter_dicretion = hit_record.normal;
         }
 
-        *scattered_ray = Ray::new(hit_record.point, scatter_dicretion);
+        *scattered_ray = Ray::new(hit_record.point, scatter_dicretion.normalize());
         *attenuation = self.albedo;
 
         return true;
@@ -50,7 +50,7 @@ impl Material for Metal {
     fn scatter(&self, incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3<f32>, scattered_ray: &mut Ray) -> bool {
         let mut reflection_direction = vector_utils::reflect(&incoming_ray.direction(), &hit_record.normal);
         reflection_direction = reflection_direction.normalize() + (self.fuzz * random_vec3_sphere());
-        *scattered_ray = Ray::new(hit_record.point, reflection_direction);
+        *scattered_ray = Ray::new(hit_record.point, reflection_direction.normalize());
         *attenuation = self.albedo;
 
         return scattered_ray.direction().dot(&hit_record.normal) > 0.0;
@@ -82,7 +82,7 @@ impl Material for Dielectric {
 
         let ri = if hit_record.front_face {1.0/self.refraction_index} else {self.refraction_index};
 
-        let unit_direction = incoming_ray.direction().normalize();
+        let unit_direction = incoming_ray.direction();
         let cos_theta = f32::min(-unit_direction.dot(&hit_record.normal), 1.0);
         let sin_theta = f32::sqrt(1.0 - cos_theta * cos_theta);
 
@@ -97,7 +97,7 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, &hit_record.normal, ri);
         }
         
-        *scattered_ray = Ray::new(hit_record.point, direction);
+        *scattered_ray = Ray::new(hit_record.point, direction.normalize());
 
         return true;
     }

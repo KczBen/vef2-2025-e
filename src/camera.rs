@@ -61,7 +61,7 @@ impl Camera {
                             + ((j as f32 + offset.y) * self.pixel_delta_v);
 
         let ray_origin = self.camera_centre;
-        let ray_direction = pixel_sample - ray_origin;
+        let ray_direction = (pixel_sample - ray_origin).normalize();
 
         return Ray::new(ray_origin, ray_direction);
     }
@@ -110,8 +110,7 @@ impl Camera {
             }
         }
 
-        let unit_direction = nalgebra::UnitVector3::new_normalize(ray.direction());
-        let a = 0.5*unit_direction.y + 1.0;
+        let a = 0.5*ray.direction().y + 1.0;
         return (1.0-a)*Vector3::new(1.0, 1.0, 1.0) + a*Vector3::new(0.5, 0.7, 1.0);
     }
 }
