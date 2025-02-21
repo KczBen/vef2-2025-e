@@ -15,7 +15,7 @@ fn linear_to_gamma(linear_component: f32) -> f32 {
 }
 
 pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usize) {
-    let r = linear_to_gamma(pixel_color.x());
+    /*let r = linear_to_gamma(pixel_color.x());
     let g = linear_to_gamma(pixel_color.y());
     let b = linear_to_gamma(pixel_color.z());
 
@@ -27,9 +27,9 @@ pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usi
 
     texture[pixel_index] = rbyte as u8;
     texture[pixel_index + 1] = gbyte as u8;
-    texture[pixel_index + 2] = bbyte as u8;
+    texture[pixel_index + 2] = bbyte as u8;*/
 
-    /*let rgba_gamma = unsafe { f32x4_sqrt(pixel_color.0) };
+    let rgba_gamma = unsafe { f32x4_sqrt(pixel_color.0) };
 
     let lower_bound = unsafe { f32x4_splat(0.0) };
     let upper_bound = unsafe { f32x4_splat(1.0) };
@@ -41,5 +41,5 @@ pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usi
 
     texture[pixel_index] = unsafe { f32x4_extract_lane::<0>(color) } as u8;
     texture[pixel_index + 1] = unsafe { f32x4_extract_lane::<1>(color) } as u8;
-    texture[pixel_index + 2] = unsafe { f32x4_extract_lane::<2>(color) } as u8;*/
+    texture[pixel_index + 2] = unsafe { f32x4_extract_lane::<2>(color) } as u8;
 }
