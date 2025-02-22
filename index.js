@@ -11,11 +11,19 @@ let textureData;
 async function runWasm() {
     wasmMemory = (await init()).memory;
     texturePointer = await get_texture();
-
     webglSetup();
 }
 
 runWasm();
+
+function resizeCanvas() {
+    const canvas = document.getElementById("gl-canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+}
+
+window.addEventListener('resize', resizeCanvas);
 
 // setup webgl on load
 function webglSetup() {
@@ -83,6 +91,8 @@ function webglSetup() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
+    resizeCanvas();
+    
     render();
 }
 
