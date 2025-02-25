@@ -5,6 +5,8 @@ use crate::vector3::Vector3;
 
 use crate::interval::Interval;
 
+use crate::{log, console_log};
+
 #[inline(always)]
 fn linear_to_gamma(linear_component: f32) -> f32 {
     if linear_component > 0.0 {
@@ -14,6 +16,7 @@ fn linear_to_gamma(linear_component: f32) -> f32 {
     return 0.0;
 }
 
+#[inline(never)]
 pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usize) {
     /*let r = linear_to_gamma(pixel_color.x());
     let g = linear_to_gamma(pixel_color.y());
@@ -38,9 +41,10 @@ pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usi
 
     // Experimental: Pack more colours in one vector
     // u8x16 should fit 4 pixels as RGBA, and only use SIMD operations
-    let color = unsafe { f32x4_nearest(f32x4_mul(f32x4_splat(255.999), clamped)) };
-
-    println!("u8 lane 0 is {}", unsafe { u8x16_extract_lane::<0>(color) });
+    // let color = unsafe { f32x4_nearest(f32x4_mul(f32x4_splat(255.999), clamped)) };
+    let color = unsafe { f32x4_mul(f32x4_splat(255.999), clamped) };
+    
+    // console_log!("u8 lane 0 is {}", unsafe { u8x16_extract_lane::<0>(color) });
 
 
     texture[pixel_index] = unsafe { f32x4_extract_lane::<0>(color) } as u8;
