@@ -1,6 +1,6 @@
 use nalgebra::Vector3;
 
-use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, TEXTURE};
+use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, rng, scene_object::scene_object::SceneObject, TEXTURE};
 
 pub struct Camera {
     #[allow(dead_code)]
@@ -68,7 +68,7 @@ impl Camera {
 
     fn sample_square() -> Vector3<f32> {
         // return Vector3::new(0.5, 0.5, 0.0);
-        return Vector3::new(fastrand::f32() - 0.5, fastrand::f32() - 0.5, 0.0);
+        return Vector3::new(rng::random_f32() - 0.5, rng::random_f32() - 0.5, 0.0);
     }
 
     fn initialise(&mut self) {

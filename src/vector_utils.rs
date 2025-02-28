@@ -1,16 +1,16 @@
 // Some extras on top of Nalgebra and fastrand
 
 use nalgebra::Vector3;
-use fastrand::f32;
+use crate::rng;
 
 fn random_f32_range(min: f32, max: f32) -> f32 {
-    return fastrand::f32() * (max - min) + min;
+    return rng::random_f32() * (max - min) + min;
 }
 
 // Might be useful later
 #[allow(dead_code)]
 fn random_vec3() -> Vector3<f32> {
-    return Vector3::new(f32(), f32(), f32());
+    return Vector3::new(rng::random_f32(), rng::random_f32(), rng::random_f32());
 }
 
 #[inline(always)]
