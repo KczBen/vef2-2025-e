@@ -6,15 +6,10 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[package.metadata.wasm-pack.profile.release]
-debug = true
-wasm-opt = false
-
 [features]
 run_main = []
 
 [dependencies]
-nalgebra = "0.33.2"
 rayon = "1.10.0"
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
