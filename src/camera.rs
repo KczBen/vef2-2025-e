@@ -33,7 +33,7 @@ impl Camera {
         self.aspect_ratio = width as f32 / height as f32;
     }
     
-    pub fn render(&mut self, world: ObjectList) {
+    pub fn render(&mut self, world: &ObjectList) {
         self.initialise();
 
         for row in 0..self.image_height {

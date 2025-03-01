@@ -38,7 +38,7 @@ pub mod scene_object {
         }
     }
 
-    pub trait SceneObject {
+    pub trait SceneObject: Sync + Send {
         fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord>;
     }
 }
