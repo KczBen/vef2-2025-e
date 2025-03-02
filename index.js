@@ -1,15 +1,33 @@
-import init, { get_texture } from './pkg/vef2_2025_e.js';
+import init, { get_texture,  trace, init_settings } from './pkg/vef2_2025_e.js';
 
-const WIDTH = 2560;
-const HEIGHT = 1440;
+let settings;
+
+const WIDTH = 1280;
+const HEIGHT = 720;
+
+/* 
+* LAYOUT:
+* 0 Texture Width
+* 1 Texture Height
+* 2 Samples Per Pixel
+* 3 Max Bounces
+*/
 
 let gl;
 let wasmMemory;
 let texturePointer;
 let textureData;
+let i32View;
 
 async function runWasm() {
     wasmMemory = (await init()).memory;
+    settings = (await init_settings()) / 4;
+    i32View = new Int32Array(wasmMemory.buffer);
+    i32View[settings + 0] = WIDTH;
+    i32View[settings + 1] = HEIGHT;
+    i32View[settings + 2] = 1;
+    i32View[settings + 3] = 4;
+    trace();
     texturePointer = await get_texture();
     webglSetup();
 }

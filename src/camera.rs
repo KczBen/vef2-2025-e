@@ -1,14 +1,14 @@
 use nalgebra::Vector3;
 
-use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, TEXTURE};
+use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, scene_object::scene_object::SceneObject, shared_mem::SharedMem, TEXTURE};
 
 pub struct Camera {
     #[allow(dead_code)]
     pub aspect_ratio: f32,
-    pub image_width: u64,
-    pub image_height: u64,
-    pub samples_per_pixel: u64,
-    pub max_depth: u64,
+    pub image_width: u32,
+    pub image_height: u32,
+    pub samples_per_pixel: u32,
+    pub max_depth: u32,
 
     pub fov_vertical: f32,
     pub location: Vector3<f32>,
@@ -27,7 +27,18 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn set_resolution(&mut self, width: u64, height: u64) {
+    pub fn new(settings: &SharedMem) -> Self {
+        return Self {
+            aspect_ratio: settings.target_width as f32 / settings.target_height as f32,
+            image_width: settings.target_width,
+            image_height: settings.target_height,
+            samples_per_pixel: settings.samples_per_pixel,
+            max_depth: settings.max_bounces,
+            ..Default::default()
+        }
+    }
+
+    pub fn set_resolution(&mut self, width: u32, height: u32) {
         self.image_width = width;
         self.image_height = height;
         self.aspect_ratio = width as f32 / height as f32;
@@ -55,7 +66,7 @@ impl Camera {
         }
     }
 
-    fn get_ray(&self, i:u64, j:u64) -> Ray {
+    fn get_ray(&self, i:u32, j:u32) -> Ray {
         let offset = Self::sample_square();
         let pixel_sample = self.pixel_00_loc + ((i as f32 + offset.x) * self.pixel_delta_u)
                             + ((j as f32 + offset.y) * self.pixel_delta_v);
@@ -94,7 +105,7 @@ impl Camera {
         self.pixel_00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);        
     }
 
-    fn ray_color(ray: &Ray, world: &ObjectList, depth: u64) -> Vector3<f32> {
+    fn ray_color(ray: &Ray, world: &ObjectList, depth: u32) -> Vector3<f32> {
         if depth <= 0 {
             return Vector3::new(0.0, 0.0, 0.0);
         }
@@ -119,7 +130,7 @@ impl Default for Camera {
     fn default() -> Self {
         let aspect_ratio = 16.0/9.0;
         let image_height = 1440;
-        let image_width = (aspect_ratio * image_height as f32) as u64;
+        let image_width = (aspect_ratio * image_height as f32) as u32;
         let samples_per_pixel = 4;
         let pixel_samples_scale = 1.0 / samples_per_pixel as f32;
 

@@ -7,6 +7,7 @@ mod interval;
 mod camera;
 mod vector_utils;
 mod material;
+mod shared_mem;
 
 use std::sync::{Arc, OnceLock, RwLock};
 
@@ -32,9 +33,10 @@ pub(crate) use console_log;
 static mut TEXTURE:Vec<u8> = Vec::new();
 
 static WORLD: OnceLock<Arc<RwLock<object_list::object_list::ObjectList>>> = OnceLock::new();
+static SETTINGS: OnceLock<shared_mem::SharedMem> = OnceLock::new();
 
 #[wasm_bindgen(start)]
-fn main() {
+fn init() {
     // Scene
     let mut world = object_list::object_list::ObjectList::default();
 
@@ -43,12 +45,19 @@ fn main() {
     world.add(object);
 
     let _ = WORLD.set(Arc::new(RwLock::new(world)));
-
-    render();
 }
 
-fn render() {
-    let mut camera = Camera::default();
+#[wasm_bindgen]
+pub async fn init_settings() -> *const shared_mem::SharedMem {
+    let settings = shared_mem::SharedMem::default();
+    let _ = SETTINGS.set(settings);
+
+    return SETTINGS.get().unwrap();
+}
+
+#[wasm_bindgen]
+pub fn trace() {
+    let mut camera = Camera::new(SETTINGS.get().unwrap());
     camera.location = Vector3::new(-2.0, 2.0, 1.0);
     camera.look_at = Vector3::new(0.0, 0.0, -1.0);
 
