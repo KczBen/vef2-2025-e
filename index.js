@@ -1,9 +1,9 @@
-import init, { get_texture,  trace, init_settings } from './pkg/vef2_2025_e.js';
+import init, { get_texture, trace, init_settings } from './pkg/vef2_2025_e.js';
 
 let settings;
 
-const WIDTH = 1280;
-const HEIGHT = 720;
+let WIDTH = 1280;
+let HEIGHT = 720;
 
 /* 
 * LAYOUT:

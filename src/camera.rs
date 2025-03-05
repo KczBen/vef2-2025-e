@@ -34,6 +34,7 @@ impl Camera {
             image_height: settings.target_height,
             samples_per_pixel: settings.samples_per_pixel,
             max_depth: settings.max_bounces,
+            pixel_samples_scale: 1.0 / settings.samples_per_pixel as f32,
             ..Default::default()
         }
     }
