@@ -1,7 +1,7 @@
 # This contains the presentation topics and some notes
 
 ## What is WASM
-Web Assembly is sort of the second language of the web, next to JavaScript. It's a statically typed language and is supported by all modern browsers. There's one slight issue with it - it looks like *this*:
+Web Assembly is sort of the second language of the web, next to JavaScript. It's a statically typed language and is supported by all modern browsers. It runs and compiles faster than JavaScript. There's one slight issue with it - it looks like *this*:
 
 ```
  (func $func35 (result i32)
@@ -21,7 +21,7 @@ The types are easy enough:
 i: integer
 32: width
 
-So an i32 is a 32 bit integer. But the rest is a mess. As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM.
+So an i32 is a 32 bit integer. The specification defines it as neither signer nor unsigned. But the rest is a mess. As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM.
 
 ### Language considerations
 There are a number of languages you may choose, but in practice, you will most likely end up using C, C++ or Rust. If you choose to write your code in C, keep security in mind. All of the C vulnerabilities you know carry over to WASM! While JavaScript is normally not vulnerable to buffer overflows, including Web Assembly introduces the threat of buffer overflows and possibly remote code execution.
@@ -30,6 +30,47 @@ I chose to write my project in Rust. Security isn't a concern for a path tracer,
 
 ### Rust demo, print hello world to console
 > This part will show how to use wasm-bindgen and wasm-pack, show the basics of Rust syntax and also introduce the limitations of the API... or lack thereof
+
+Let's do a "Hello world" in Rust, and see how to run it in a browser
+
+First, "Hello world" in Rust is very simple:
+
+```
+//lib.rs
+fn main() {
+  println!("Hello, world!");
+}
+```
+
+Rust syntax follows this general form:
+
+>Variables
+
+Define immutable (const) variable:
+let name: type = ...
+
+Define mutable variable:
+let mut name: type = ...
+
+The Rust compiler does type inference, so defining the types is optional in most cases.
+
+>Function declerations
+
+```
+fn name(arg1: type) -> return_type {
+  ...
+}
+```
+
+Note that in function signatures, defining the args type and return type is necessary. 
+
+To get it running in a browser, we'll use two extra dependencies: `wasm-pack` and `wasm-bindgen`.
+
+`wasm-pack` packages your `wasm` code and glue logic into an ES module for use in your main JavaScript code.
+
+`wasm-bindgen` is used for importing JavaScript functions and exporting Rust functions.
+
+
 
 ## Limitations
 Web Assembly has only one possible API - JavaScript. WASM by itself cannot take input nor give output, all communication must be done via JavaScript. Luckily, you have two options:
