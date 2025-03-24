@@ -5,15 +5,19 @@ mod sphere;
 mod object_list;
 mod interval;
 mod camera;
-mod vector_utils;
+pub mod vector_utils;
 mod material;
+pub mod vector3;
+mod rng;
+mod shared_mem;
 
-use std::{f64::consts::PI, sync::Arc};
+use std::cell::RefCell;
+use std::sync::{Arc, OnceLock, RwLock};
 
 use camera::Camera;
-use material::Material;
 use wasm_bindgen::prelude::*;
-use nalgebra::{Vector, Vector3};
+use crate::vector3::Vector3;
+use crate::rng::Xorshift32State;
 
 #[wasm_bindgen]
 extern "C" {
@@ -32,32 +36,46 @@ pub(crate) use console_log;
 
 static mut TEXTURE:Vec<u8> = Vec::new();
 
+// Maybe multi-threading later
+thread_local! {
+    static RNG: RefCell<Xorshift32State> = RefCell::new(Xorshift32State::new(0xBAD5EED));
+}
+
+static WORLD: OnceLock<Arc<RwLock<object_list::object_list::ObjectList>>> = OnceLock::new();
+static SETTINGS: OnceLock<shared_mem::SharedMem> = OnceLock::new();
+
 #[wasm_bindgen(start)]
-fn main() {
+fn init() {
     // Scene
     let mut world = object_list::object_list::ObjectList::default();
 
-    let material_ground = Arc::new(material::Lambertian::new(Vector3::new(0.8,0.8,0.0)));
-    let material_center = Arc::new(material::Lambertian::new(Vector3::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(material::Dielectric::new(1.5));
-    let material_bubble = Arc::new(material::Dielectric::new(1.0 / 1.5));
-    let material_right = Arc::new(material::Metal::new(Vector3::new(0.8, 0.6, 0.2), 1.0));
-    
-    let object_binding = sphere::sphere::Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0, material_ground);
-    world.add(&object_binding);
-    let object_binding = sphere::sphere::Sphere::new(Vector3::new(0.0, 0.0, -1.2), 0.5, material_center);
-    world.add(&object_binding);
-    let object_binding = sphere::sphere::Sphere::new(Vector3::new(-1.0, 0.0, -1.0), 0.5, material_left);
-    world.add(&object_binding);
-    let object_binding = sphere::sphere::Sphere::new(Vector3::new(-1.0, 0.0, -1.0), 0.4, material_bubble);
-    world.add(&object_binding);
-    let object_binding = sphere::sphere::Sphere::new(Vector3::new(1.0, 0.0, -1.0), 0.5, material_right);
-    world.add(&object_binding);
+    let material_ground = Arc::new(material::Lambertian::new(Vector3::new(0.8, 0.8, 0.0)));
+    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(object);
 
-    let mut camera = Camera::default();
+    let _ = WORLD.set(Arc::new(RwLock::new(world)));
+}
+
+#[wasm_bindgen]
+pub async fn init_settings() -> *const shared_mem::SharedMem {
+    let settings = shared_mem::SharedMem::default();
+    let _ = SETTINGS.set(settings);
+
+    return SETTINGS.get().unwrap();
+}
+
+#[wasm_bindgen]
+pub fn trace() {
+    let mut camera = Camera::new(SETTINGS.get().unwrap());
     camera.location = Vector3::new(-2.0, 2.0, 1.0);
     camera.look_at = Vector3::new(0.0, 0.0, -1.0);
-    camera.render(world);
+
+    if let Some(world) = WORLD.get() {
+        match world.read() {
+            Ok(world) => camera.render(&*world),
+            Err(_) => console_log!("Failed to get world")
+        }
+    };
 }
 
 // This is probably all doable without unsafe blocks

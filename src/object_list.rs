@@ -1,18 +1,20 @@
 pub mod object_list {
-    use crate::{interval::Interval, ray::ray, scene_object::{self, scene_object::{HitRecord, SceneObject}}};
+    use std::sync::Arc;
+
+    use crate::{interval::Interval, ray::ray, scene_object::scene_object::{HitRecord, SceneObject}};
 
     #[derive(Default)]
-    pub struct ObjectList<'a>{
-        pub objects: Vec<&'a dyn SceneObject>,
+    pub struct ObjectList {
+        pub objects: Vec<Arc<dyn SceneObject>>,
     }
 
-    impl<'a> ObjectList<'a> {
-        pub fn add(&mut self, object: &'a dyn scene_object::scene_object::SceneObject) {
+    impl ObjectList {
+        pub fn add(&mut self, object: Arc<dyn SceneObject>) {
             self.objects.push(object);
         }
     }
 
-    impl<'a> SceneObject for ObjectList<'a> {
+    impl SceneObject for ObjectList {
         fn hit(&self, ray: &ray::Ray, ray_t: Interval) -> Option<HitRecord> {
             //let mut temp_rec: HitRecord = HitRecord::new(record.material.clone());
             let mut hit_anything  = None;
