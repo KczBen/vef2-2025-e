@@ -1,16 +1,16 @@
 // Some extras on top of Nalgebra and fastrand
 
 use crate::vector3::Vector3;
-use fastrand::f32;
+use crate::rng;
 
-pub fn random_f32_range(min: f32, max: f32) -> f32 {
-    return fastrand::f32() * (max - min) + min;
+fn random_f32_range(min: f32, max: f32) -> f32 {
+    return rng::random_f32() * (max - min) + min;
 }
 
 // Might be useful later
 #[allow(dead_code)]
-pub fn random_vec3() -> Vector3 {
-    return Vector3::new(f32(), f32(), f32());
+fn random_vec3() -> Vector3 {
+    return Vector3::new(rng::random_f32(), rng::random_f32(), rng::random_f32());
 }
 
 #[inline(always)]
@@ -24,7 +24,7 @@ pub fn random_vec3_unit() -> Vector3  {
         let p = random_vec3_range(-1.0, 1.0);
         let len_sqr = p.norm_squared();
 
-        if 0.0 < len_sqr && len_sqr <= 1.0 {
+        if 1e-160 < len_sqr && len_sqr <= 1.0 {
             return p.normalize();
         }
     }

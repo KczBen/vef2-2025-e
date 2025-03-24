@@ -1,5 +1,5 @@
 // I would prefer a BSDF but this *is* simpler as it is in the book
-use crate::{ray::ray::Ray, scene_object::scene_object::HitRecord, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}, vector3::Vector3};
+use crate::{ray::ray::Ray, rng, scene_object::scene_object::HitRecord, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}, vector3::Vector3};
 
 pub trait Material {
     fn scatter(&self, incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3, scattered_ray: &mut Ray) -> bool;
@@ -87,7 +87,7 @@ impl Material for Dielectric {
         let cannot_refract = ri * sin_theta > 1.0;
         let direction;
 
-        if cannot_refract || Self::reflectance(cos_theta, ri) > fastrand::f32() {
+        if cannot_refract || Self::reflectance(cos_theta, ri) > rng::random_f32() {
             direction = reflect(unit_direction, hit_record.normal);
         }
 

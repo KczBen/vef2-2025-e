@@ -8,12 +8,15 @@ mod camera;
 pub mod vector_utils;
 mod material;
 pub mod vector3;
+mod rng;
 
+use std::cell::RefCell;
 use std::sync::Arc;
 
 use camera::Camera;
 use wasm_bindgen::prelude::*;
 use crate::vector3::Vector3;
+use crate::rng::Xorshift32State;
 
 #[wasm_bindgen]
 extern "C" {
@@ -31,6 +34,11 @@ macro_rules! console_log {
 pub(crate) use console_log;
 
 static mut TEXTURE:Vec<u8> = Vec::new();
+
+// Maybe multi-threading later
+thread_local! {
+    static RNG: RefCell<Xorshift32State> = RefCell::new(Xorshift32State::new(0xBAD5EED));
+}
 
 #[wasm_bindgen(start)]
 fn main() {
