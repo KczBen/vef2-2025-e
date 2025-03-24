@@ -1,7 +1,36 @@
 # This contains the presentation topics and some notes
+## What I made
+For my project, I wrote a path tracer (or ray tracer). It is based on the book `Ray Tracing in One Weekend`. It's a very simple path tracer with only bounce lighting. It doesn't look particularly interesting, but it's not the focus of the presentation. You don't need knowledge about graphics to follow along, but I will mention the basics of ray and path tracing:
+
+Ray tracing is a very simple concept: You draw a line in 3D space and see where it lands. You only need a starting point and a direction.
+
+Path tracing is the graphics technique to simulate light reflecting off surfaces in the world. At its core, it uses recursive ray tracing.
+
+While the graphics part is interesting, the focus is on this:
+> show JavaScript code
+
+This is all the JavaScript code. There's a bit of logic, some WebGL shader code, but no path tracer. That all happens in these two lines of code:
+
+```
+async function runWasm() {
+    wasmMemory = (await init()).memory;
+    ...
+    trace();
+    ...
+}
+```
+
+All of the path tracing code is written in WebAssembly.
 
 ## What is WASM
-Web Assembly is sort of the second language of the web, next to JavaScript. It's a statically typed language and is supported by all modern browsers. It runs and compiles faster than JavaScript. There's one slight issue with it - it looks like *this*:
+Web Assembly is sort of the second language of the web, expanding - *but not replacing* - JavaScript. It's a statically typed language and is supported by all modern browsers. It aims to run and compile faster than JavaScript, benchmarks put it at around 10% to 30% faster than equivalent JavaScript code.
+
+Now that all sounds good, but there are a few limitations:
+
+First, we have no access to web APIs. This means that for any input/output, we must interface through JavaScript.
+
+Second, WebAssembly looks like *this:*
+
 
 ```
  (func $func35 (result i32)
@@ -17,20 +46,31 @@ Web Assembly is sort of the second language of the web, next to JavaScript. It's
         ...)
 ```
 
-The types are easy enough:
-i: integer
-32: width
+As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM.
 
-So an i32 is a 32 bit integer. The specification defines it as neither signer nor unsigned. But the rest is a mess. As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM.
+WebAssembly has the following primitive types:
+```
+Integer:
+i32
+i64
+
+Floating point:
+f32
+f64
+
+Vector:
+v128
+```
+
+Even though you won't write WebAssembly directly, it is good to keep the types in mind when writing your higher level code.
 
 ### Language considerations
-There are a number of languages you may choose, but in practice, you will most likely end up using C, C++ or Rust. If you choose to write your code in C, keep security in mind. All of the C vulnerabilities you know carry over to WASM! While JavaScript is normally not vulnerable to buffer overflows, including Web Assembly introduces the threat of buffer overflows and possibly remote code execution.
+[There are a number of languages you may choose from](https://github.com/appcypher/awesome-wasm-langs), but in practice, you will most likely end up using one of these three:
+C, C++, Rust. If you choose to write your code in C, keep security in mind. All of the C vulnerabilities you know (buffer overflow, use-after-free, double free, etc.) carry over to WASM! The Web Assembly VM runs in a sandbox, but it does not protect you from your own mistakes.
 
 I chose to write my project in Rust. Security isn't a concern for a path tracer, I simply like the language. It also offers a mature Web Assembly ecosystem for use in your project.
 
-### Rust demo, print hello world to console
-> This part will show how to use wasm-bindgen and wasm-pack, show the basics of Rust syntax and also introduce the limitations of the API... or lack thereof
-
+### Hello, Rust!
 Let's do a "Hello world" in Rust, and see how to run it in a browser
 
 First, "Hello world" in Rust is very simple:
@@ -42,19 +82,36 @@ fn main() {
 }
 ```
 
+The syntax borrows mainly from C++ and OCaml.
+
+Other example:
+```
+//lib.rs
+fn main() {
+  let a = 1;
+  let b = 3;
+
+  let c = add_two(a, b);
+}
+
+fn add_two(a: i64, b: i64) -> i64 {
+  return a + b;
+}
+```
+
 Rust syntax follows this general form:
 
->Variables
-
 Define immutable (const) variable:
-let name: type = ...
+
+`let name: type = ...`
 
 Define mutable variable:
-let mut name: type = ...
+
+`let mut name: type = ...`
+
+Note that variables must be initialised to some value, not doing so is a compile time error.
 
 The Rust compiler does type inference, so defining the types is optional in most cases.
-
->Function declerations
 
 ```
 fn name(arg1: type) -> return_type {
@@ -64,51 +121,120 @@ fn name(arg1: type) -> return_type {
 
 Note that in function signatures, defining the args type and return type is necessary. 
 
+### Into the browser
 To get it running in a browser, we'll use two extra dependencies: `wasm-pack` and `wasm-bindgen`.
 
-`wasm-pack` packages your `wasm` code and glue logic into an ES module for use in your main JavaScript code.
-
+`wasm-pack` packages your `wasm` code and glue logic into an ES module for use in your main JavaScript code.\
 `wasm-bindgen` is used for importing JavaScript functions and exporting Rust functions.
 
+First, we need to decide *how* we want to print "Hello, world". As mentioned before, we have no *native* I/O from WebAssembly, so `println!()` will not work. We have two options:
 
+ * Pass the string to JavaScript and print from there
+ * Import `console.log()` and call it from Rust
 
-## Limitations
-Web Assembly has only one possible API - JavaScript. WASM by itself cannot take input nor give output, all communication must be done via JavaScript. Luckily, you have two options:
+Both approaches are valid, but the former is better for portability. JavaScript imports introduce platform dependency, which might not be ideal for a shared code base.
 
-* Import/Export functions
+We need a function that returns a string in Rust:
+```
+fn print_string() -> String {
+  return "Hello, world!".to_string();
+}
+```
 
-WASM allows you to directly call JavaScript functions and use their return value, and you may also call WASM functions from JavaScript. This is the safe way to do things, albeit somewhat slow. On one side, you have a language with a very strong type system, and on the other you have one that is completely detached from reality. Type checking and conversion takes some time on this interface.
+Now, we need to make it visible to JavaScript. We'll do that using the `wasm-bindgen` crate.
+```
+#[wasm_bindgen]
+pub fn print_string() -> String {
+  return "Hello, world!".to_string();
+}
+```
 
-* Shared memory
+`#[wasm_bindgen]` is an attribute that adds metadata to the function. It informs the compiler about certain things, in this case, it exposes the function in the final WASM module. We also need to make the function public for it to work.
 
-WASM operates in a linear memory model, that is, all of the memory used by the module is in a continuous array. This can be accessed in JavaScript as an ArrayBuffer. For high performance code, you may consider reading and writing values directly to this buffer. Here be dragons! You are completely on your own with regards to type checking and memory safety.
+Now we're all set up on the Rust side, we only need to compile with\
+`wasm-pack build --target web`
 
-## So still why WASM?
-Despite the limitations, there's a few reasons why you might want to opt for web assembly:
-* Performance - Web Assembly code is generally 10-30% faster than JavaScript.
-* You might just *really* hate JavaScript - Understandable
-* Port programs into web apps - Web Assembly allows you to compile the core of your desktop application into web code, only requiring you to port the user interface.
-* Exclusive features - More on this later
+This creates an ES module under `pkg/`, which we can import into our `index.js`:
+```
+import init, { print_string } from './pkg/vef2_2025_e.js';
+```
 
-## Graphics
-> This part will talk a bit about path tracing, but not in too much detail. Should set up the next segment nicely
+We're almost there. We need to initialise the WASM module, and call our string function. Here is the full code:
+
+```
+import init, { print_string } from './pkg/vef2_2025_e.js';
+
+async function main() {
+  await init();
+  console.log(print_string());
+}
+
+main()
+```
+
+We can't run this in Node yet, it doesn't have full support for WebAssembly. Instead, we'll need to run it in a browser.
+
+> put link to local web server running it here
+
+And there it is!
 
 ## Performance
-We get some performance benefits just by using WebAssembly, but that’s not always guaranteed. Instead, a big boost comes from using a special type: v128. The v stands for "vector," and this type is exclusive to WebAssembly. In practice, v128 isn’t just a single type—it represents multiple values packed into one. This enables a programming paradigm called `Single Instruction Multiple Data` (`SIMD`). In standard multi-threading, work is split across multiple CPU threads, with each thread running independently and executing different operations. `SIMD` takes a different approach: it applies the same operation (`Single Instruction`) to multiple values (`Multiple Data`) at the same time - within a single CPU core.
+Path tracing is a very slow process, so any performance uplift is welcome. 
 
-Example: Vector addition
+First, we'll measure where we are, and define some goals. To measure, we can use the developer tools in our browser to profile our code. We'll need source mappings (use a debug build!) to get function names.
 
-Normally when adding two 3D vectors, you perform:
+> show devtools pane first without mappings, then with mappings
 
-x1 + x2
-y1 + y2
-z1 + z2
+Now we can see what takes the most time, and where we need to focus.
 
-Each addition happens sequentially, one after another in three separate operations.
+So, we need goals. *Run it until it's done* is good, but because of graphics reasons (see full report), path tracing takes infinite time to complete so that won't cut it. We need to limit the recursion depth and the samples per pixel (again, see report for details if interested) as I've already done.
 
-With SIMD, we define both vectors as `v128`. We can treat these vectors as 4 32-bit floats using the `f32x4` type. Then we use the `f32x4_add` operation in Rust to add the two vectors. This performs the single instruction - add - on multiple data - the 8 32-bit numbers. All of this happens in one CPU core simply by taking advantage of modern CPU instructions which are not accessible to JavaScript.
+Instead, we'll just say *Make it faster*. Not the best goal, but it is easy to achieve.
 
-Rewriting the vector3 library to use `SIMD` results in a 25% time reduction by itself. While linear algebra is a natural fit for SIMD, it's not always this easy. Making proper use of SIMD operations requires a very different way of thinking about problems, and trying to force it into every part of your code will most likely make it an unmaintainable nightmare.
+We gained some just by using WebAssembly instead of JavaScript. Compiler optimisations help as well, but we can do more.
+
+Here we'll use the special `v128` type, and a bit of linear algebra. Rays consist of two parts: an origin point, and a direction. These are all 3 dimensional points in space - vectors. We use a lot of vector operations - addition, subtraction, multiplication, division, cross and dot products - to trace our rays.
+
+Luckily, there is special hardware in modern CPUs to speed up these operations. If you want to make use of that hardware on the web, you need to use WebAsembly. The `v128` type does exactly that.
+
+Normally when you add two vectors, it takes 3 operations: Add the x coordinates, add the y coordinates, and finally add the z coordinates.
+
+x<sub>1</sub> + x<sub>2</sub>\
+y<sub>1</sub> + y<sub>2</sub>\
+z<sub>1</sub> + z<sub>2</sub>
+
+In Rust, it would look like this:
+```
+fn add_vec(vec1: vector3, vec2: vector3) -> vector3 {
+  return vector3::new(vec1.x + vec2.x,
+                      vec1.y + vec2.y,
+                      vec1.z + vec2.z);
+}
+```
+
+With the `v128` type, we can use a programming paradigm called `SIMD` (Single Instruction Multiple Data) to turn this into a single operation. `v128` can be defined as any one of these types:
+```
+i8x8
+u8x8
+i32x4
+u32x4
+i64x2
+u64x2
+
+f32x4
+f64x2
+```
+
+For this, we want to use the `f32x4` type. That is, 4 32-bit floating point numbers packed into one CPU register. Using this, we can now write our vector addition function as such:
+```
+fn add_vec(vec1: v128, vec2: v128) -> v128 {
+  return f32x4_add(vec1, vec2);
+}
+```
+
+This performs the exact same operation as the first function, but in a single instruction instead of 3. Rewriting the path tracer to use this approach results in a 20% reduction in runtime.
+
+You don't need to rewrite your code to take advantage of this exclusive feature: Adding the `+simd128` compiler flag to Rust enables the auto vectoriser, which will recognise some SIMD patterns and automatically insert these instructions.
 
 ## Quirks and issues
 The process isn't flawless, and there are a few points that stand out:
@@ -119,4 +245,4 @@ The console in your browser doesn't tell you *Anything*. Get used to seeing the 
 
 * Testing is fragile.
 
-Debugging is hard, but surely you can just test and not have bugs, right? Hah... no. It runs into one big problem: The Stack. Web Assembly has a very limited call stack size, and you will often get the error `Too much recursion` even if you don't use any. This wouldn't be an issue, if not for Rust's design. The Rust compiler very aggressively inlines functions in `release` mode. However, testing is done in `debug` mode. This mode *disables* inlining, and adds additional runtime checks to validate your code. These checks are very useful, and are part of what makes Rust safe. But they don't do much good when your tests *don't even run* due to a stack overflow. You can carry on testing in `release` mode, but it's far from ideal.
+Debugging is hard, and so is testing. It runs into one big problem: The Stack. Web Assembly has a very limited call stack size, and you will often get the error `Too much recursion` even if you don't use any. This wouldn't be an issue, if not for Rust's design. The Rust compiler very aggressively inlines functions in `release` mode. However, testing is done in `debug` mode. This mode *disables* inlining, and adds additional runtime checks to validate your code. These checks are very useful, and are part of what makes Rust safe. But they don't do much good when your tests *don't even run* due to a stack overflow. You can carry on testing in `release` mode, but it's far from ideal. Your best bet is to test on your native architecture.
