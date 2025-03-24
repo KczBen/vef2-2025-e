@@ -214,8 +214,8 @@ fn add_vec(vec1: vector3, vec2: vector3) -> vector3 {
 
 With the `v128` type, we can use a programming paradigm called `SIMD` (Single Instruction Multiple Data) to turn this into a single operation. `v128` can be defined as any one of these types:
 ```
-i8x8
-u8x8
+i8x16
+u8x16
 i32x4
 u32x4
 i64x2
