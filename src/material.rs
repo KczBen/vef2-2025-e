@@ -1,7 +1,7 @@
 // I would prefer a BSDF but this *is* simpler as it is in the book
 use crate::{ray::ray::Ray, rng, scene_object::scene_object::HitRecord, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}, vector3::Vector3};
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(&self, incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3, scattered_ray: &mut Ray) -> bool;
 }
 
