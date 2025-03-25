@@ -78,7 +78,7 @@ $a$ is the start of the interval\
 $N$ is the number of samples taken\
 $f$ is any function
 
-Notably, the function converges as N approaches infinity. For this reason, Monte Carlo methods may approximate, but never equal the true integral of the function $f$.
+The function converges as N approaches infinity. For this reason, Monte Carlo methods may approximate, but never equal the true integral of the function $f$.
 
 Path tracing takes random samples by randomising the direction in which rays bounce upon hitting a surface. On a perfectly diffuse surface, rays may bounce in any direction within the unit hemisphere. As the surface gets "shinier", the cone in which rays may bounce narrows. On a perfectly smooth mirror surface, rays always bounce in the same direction.
 
