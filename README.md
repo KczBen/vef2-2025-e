@@ -33,7 +33,7 @@ Communication between JavaScript and WebAssembly is handled via shared memory to
 ## Timeline
 The path tracer in the first book is now fully implemented in Rust.
 
-Next priority is performance. Target is ??? on an 8-core AMD Ryzen 7 5800X CPU.
+The project is considered feature complete as of now, focus is on finishing the report and preparing for the presentation.
 
 Measuring path tracing performance is tricky, and I do not have a set goal yet. FPS is not a good metric, as path tracing technically only resolves after infinite time. Samples per second is better, but that depends on scene complexity. Possibly the best metric is shader invocations per second, which is independent of the scene.
 
