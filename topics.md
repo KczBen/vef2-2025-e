@@ -23,11 +23,11 @@ async function runWasm() {
 All of the path tracing code is written in WebAssembly.
 
 ## What is WASM
-Web Assembly is sort of the second language of the web, expanding - *but not replacing* - JavaScript. It's a statically typed language and is supported by all modern browsers. It aims to run and compile faster than JavaScript, benchmarks put it at around 10% to 30% faster than equivalent JavaScript code.
+WebAssembly the "second language" of the web, expanding - *but not replacing* - JavaScript. It's a statically typed language and is supported by all modern browsers. It aims to run and compile faster than JavaScript, benchmarks put it at around 10% to 30% faster than equivalent JavaScript code.
 
 Now that all sounds good, but there are a few limitations:
 
-First, we have no access to web APIs. This means that for any input/output, we must interface through JavaScript.
+JavaScript is mandatory. In order to load WebAssembly in a web environment, some JavaScript code must be present. All API access must go through JavaScript.
 
 Second, WebAssembly looks like *this:*
 
@@ -46,9 +46,7 @@ Second, WebAssembly looks like *this:*
         ...)
 ```
 
-As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM.
-
-WebAssembly has the following primitive types:
+WebAssembly has the following primitive data types:
 ```
 Integer:
 i32
@@ -62,7 +60,13 @@ Vector:
 v128
 ```
 
-Even though you won't write WebAssembly directly, it is good to keep the types in mind when writing your higher level code.
+The other important data type is `externref`. This type allows WebAssembly code to directly receive and handle JavaScript values.
+
+As the name suggest, this is an assembly-like language. While you can write it by hand, the intended way to use it is to write code in a higher level langauge, and then compile it into WASM. This has two primary benefits:
+* Portable code\
+You can mostly re-use the core of your desktop application on the web, without needing to re-write anything other than the UI
+* It isn't JavaScript\
+`[] == ![]; // true`
 
 ### Language considerations
 [There are a number of languages you may choose from](https://github.com/appcypher/awesome-wasm-langs), but in practice, you will most likely end up using one of these three:
@@ -187,7 +191,7 @@ First, we'll measure where we are, and define some goals. To measure, we can use
 
 Now we can see what takes the most time, and where we need to focus.
 
-So, we need goals. *Run it until it's done* is good, but because of graphics reasons (see full report), path tracing takes infinite time to complete so that won't cut it. We need to limit the recursion depth and the samples per pixel (again, see report for details if interested) as I've already done.
+So, we need goals. *Run it until it's done* is good, but because of mathematical reasons (see full report), path tracing takes infinite time to complete. That's quite hard to fit in a 10 minute presentation. We need to limit the recursion depth and the samples per pixel (again, see report for details if interested) as I've already done.
 
 Instead, we'll just say *Make it faster*. Not the best goal, but it is easy to achieve.
 
@@ -232,7 +236,7 @@ fn add_vec(vec1: v128, vec2: v128) -> v128 {
 }
 ```
 
-This performs the exact same operation as the first function, but in a single instruction instead of 3. Rewriting the path tracer to use this approach results in a 20% reduction in runtime.
+This performs the exact same operation as the first function, but in a single instruction instead of 3. Rewriting the path tracer to use this approach results in a 25% reduction in runtime.
 
 You don't need to rewrite your code to take advantage of this exclusive feature: Adding the `+simd128` compiler flag to Rust enables the auto vectoriser, which will recognise some SIMD patterns and automatically insert these instructions.
 
@@ -246,3 +250,9 @@ The console in your browser doesn't tell you *Anything*. Get used to seeing the 
 * Testing is fragile.
 
 Debugging is hard, and so is testing. It runs into one big problem: The Stack. Web Assembly has a very limited call stack size, and you will often get the error `Too much recursion` even if you don't use any. This wouldn't be an issue, if not for Rust's design. The Rust compiler very aggressively inlines functions in `release` mode. However, testing is done in `debug` mode. This mode *disables* inlining, and adds additional runtime checks to validate your code. These checks are very useful, and are part of what makes Rust safe. But they don't do much good when your tests *don't even run* due to a stack overflow. You can carry on testing in `release` mode, but it's far from ideal. Your best bet is to test on your native architecture.
+
+## Some closing tips
+* Try to have clean separation between JavaScript and WASM.\
+This will help keep your WASM code portable, and make testing on other platforms easier
+* Don't be afraid to use `unsafe{}` in Rust\
+`unsafe{}` is required for some operations. Pay attention to what you're doing! The borrow checker won't save you here
