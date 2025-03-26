@@ -1,20 +1,7 @@
 #![allow(unused_unsafe)]
-use std::arch::wasm32::{f32x4_extract_lane, f32x4_max, f32x4_min, f32x4_mul, f32x4_nearest, f32x4_splat, f32x4_sqrt, u8x16_extract_lane};
+use std::arch::wasm32::{f32x4_extract_lane, f32x4_max, f32x4_min, f32x4_mul, f32x4_splat, f32x4_sqrt};
 
 use crate::vector3::Vector3;
-
-use crate::interval::Interval;
-
-use crate::{log, console_log};
-
-#[inline(always)]
-fn linear_to_gamma(linear_component: f32) -> f32 {
-    if linear_component > 0.0 {
-        return linear_component.sqrt();
-    }
-
-    return 0.0;
-}
 
 pub fn write_color(pixel_color: Vector3, texture: &mut Vec<u8>, pixel_index: usize) {
     let rgba_gamma = unsafe { f32x4_sqrt(pixel_color.0) };
