@@ -1,21 +1,20 @@
-// Some extras on top of Nalgebra and fastrand
+// Compiler is still wrong
+#![allow(unused_unsafe)]
+use std::arch::wasm32::{f32x4_add, f32x4_mul, f32x4_splat, f32x4_sub};
 
 use crate::vector3::Vector3;
 use crate::rng;
 
-fn random_f32_range(min: f32, max: f32) -> f32 {
-    return rng::random_f32() * (max - min) + min;
-}
-
-// Might be useful later
-#[allow(dead_code)]
-fn random_vec3() -> Vector3 {
-    return Vector3::new(rng::random_f32(), rng::random_f32(), rng::random_f32());
-}
-
 #[inline(always)]
 pub fn random_vec3_range(min: f32, max: f32) -> Vector3 {
-    return Vector3::new(random_f32_range(min, max), random_f32_range(min, max), random_f32_range(min, max));
+    let mut vec = rng::random_v128();
+    let min = unsafe { f32x4_splat(min) };
+    let max = unsafe { f32x4_splat(max) };
+    let range = unsafe { f32x4_sub(max, min) };
+
+    vec = unsafe { f32x4_mul(vec, range) };
+    vec = unsafe { f32x4_add(vec, min) };
+    return Vector3(vec);
 }
 
 #[inline(always)]

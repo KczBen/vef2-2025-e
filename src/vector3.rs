@@ -11,6 +11,10 @@ impl Vector3 {
         return Self(f32x4(x, y, z, 0.0));
     }
 
+    pub fn from_v128(vec: v128) -> Self {
+        return Self(unsafe { f32x4_replace_lane::<3>(vec, 0.0) } );
+    }
+
     #[inline]
     pub fn x(self) -> f32 { unsafe { f32x4_extract_lane::<0>(self.0) } }
     #[inline]

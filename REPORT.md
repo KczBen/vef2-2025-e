@@ -78,10 +78,17 @@ $a$ is the start of the interval\
 $N$ is the number of samples taken\
 $f$ is any function
 
-The function converges as N approaches infinity. For this reason, Monte Carlo methods may approximate, but never equal the true integral of the function $f$.
+The function converges as $N$ approaches infinity. For this reason, Monte Carlo methods may approximate, but never equal the true integral of the function $f$.
 
 Path tracing takes random samples by randomising the direction in which rays bounce upon hitting a surface. On a perfectly diffuse surface, rays may bounce in any direction within the unit hemisphere. As the surface gets "shinier", the cone in which rays may bounce narrows. On a perfectly smooth mirror surface, rays always bounce in the same direction.
 
-> Fun fact: Many games use ray tracing only for reflections because of this property. Mirror surfaces only require a single ray per pixel, whereas a rough surface requires multiple. This greatly reduces the computational power required for path tracing.
+> Many games use ray tracing only for reflections because of this property. Mirror surfaces only require a single ray per pixel, whereas a rough surface requires multiple. This greatly reduces the computational power required for path tracing.
 
 There are various techniques to speed up path tracing. These include the use of a bounding volume hierarchy "BVH" to more efficiently store the scene, importance sampling to speed up convergeance of the Monte Carlo method, and ReSTIR GI to efficiently re-use already computed light paths. None of these methods are used in this path tracer.
+
+## Linear algebra and the `v128` type
+WASM provides the `v128` primitive type for vector operations. As part of WASM's goal to offer near-native performance, this type is designed to take advantage of Single Instruction Multiple Data "SIMD" extensions in CPU instruction sets. These are `SSE` on x86 and `NEON` on ARM, or equivalent on other architectures. Note that the WASM specification does not require *any* specific instructions. The implementation may choose to emulate these instructions if the hardware doesn't support it.
+
+This code uses SIMD instructions to perform fast vector operations for addition, division, subtraction, cross and dot product operations. `v128` types are not constrained to any data format, their interpretation depends solely on the instruction using the type. To effectively store ray origins and directions, the `f32x4` type is used, allowing for 4 dimensional vectors. Since the $w$ component is never used, it is set to zero at all times to not interfere with other operations.
+
+The use of the `v128` type and associated SIMD instructions results in a 25% reduction in render time for the test scene. Further uses for SIMD in this project include per-pixel gamma correction, resulting in another 1-2% reduction in render time. Vectors are also randomly generated using a SIMD implementation of the xorshift algorithm.
