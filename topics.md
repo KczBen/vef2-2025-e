@@ -103,28 +103,6 @@ fn add_two(a: i64, b: i64) -> i64 {
 }
 ```
 
-Rust syntax follows this general form:
-
-Define immutable (const) variable:
-
-`let name: type = ...`
-
-Define mutable variable:
-
-`let mut name: type = ...`
-
-Note that variables must be initialised to some value, not doing so is a compile time error.
-
-The Rust compiler does type inference, so defining the types is optional in most cases.
-
-```
-fn name(arg1: type) -> return_type {
-  ...
-}
-```
-
-Note that in function signatures, defining the args type and return type is necessary. 
-
 ### Into the browser
 To get it running in a browser, we'll use two extra dependencies: `wasm-pack` and `wasm-bindgen`.
 
