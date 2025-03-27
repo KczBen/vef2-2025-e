@@ -86,7 +86,7 @@ pub fn add_sphere(x: f32, y: f32, z: f32, diameter: f32, material: u32, r: f32, 
                 }
                 // Dielectric
                 else if material == 2 {
-                    let mat = Arc::new(material::Metal::new(Vector3::new(r, g, b), special));
+                    let mat = Arc::new(material::Dielectric::new(special));
                     let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
                     world.add(object);
                 }
