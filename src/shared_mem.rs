@@ -9,4 +9,6 @@ pub struct SharedMem {
     pub target_height: u32,
     pub samples_per_pixel: u32,
     pub max_bounces: u32,
+
+    pub texture_changed: u32,
 }
