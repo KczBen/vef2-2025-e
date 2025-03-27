@@ -17,10 +17,23 @@
             height: 100vh;
             display: block;
         }
+
+        #fpsDisplay {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
     </style>
 
 </head>
 <body>
+    <div id="fpsDisplay"></div>
     <canvas id="gl-canvas">
         Oops ... your browser doesn't support the HTML5 canvas element
     </canvas>

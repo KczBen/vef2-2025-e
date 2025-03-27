@@ -1,9 +1,11 @@
 import init, { get_texture, trace, init_settings, add_sphere } from './pkg/vef2_2025_e.js';
 
+const fpsDisplay = document.getElementById('fpsDisplay');
+
 let settings;
 
-let WIDTH = 1280;
-let HEIGHT = 720;
+let WIDTH = 160;
+let HEIGHT = 90;
 let MAX_SAMPLES = 512;
 let MAX_DEPTH = 8;
 
@@ -14,6 +16,7 @@ let MAX_DEPTH = 8;
 * 2 Samples Per Pixel
 * 3 Max Bounces
 * 4 Texture changed
+* 5 Time start
 */
 
 let gl;
@@ -21,6 +24,7 @@ let wasmMemory;
 let texturePointer;
 let textureData;
 let i32View;
+let timeStart;
 
 async function initWasm() {
     wasmMemory = (await init()).memory;
@@ -42,6 +46,7 @@ setupScene();
 runTracer();
 
 async function runTracer() {
+    timeStart = performance.now();
     trace();
     console.log("Began tracing");
 
@@ -53,6 +58,7 @@ async function runTracer() {
             texturePointer = await get_texture();
             webglSetup();
             samples += 1;
+            fpsDisplay.innerHTML = `Samples per second: ${1000 / ((performance.now() - timeStart) / samples)}`;
         }
 
         else {
