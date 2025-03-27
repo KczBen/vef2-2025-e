@@ -42,7 +42,7 @@ thread_local! {
 }
 
 static WORLD: OnceLock<Arc<RwLock<object_list::object_list::ObjectList>>> = OnceLock::new();
-static SETTINGS: OnceLock<shared_mem::SharedMem> = OnceLock::new();
+static SETTINGS: OnceLock<RwLock<shared_mem::SharedMem>> = OnceLock::new();
 
 #[wasm_bindgen(start)]
 fn init() {
@@ -54,14 +54,14 @@ fn init() {
 #[wasm_bindgen]
 pub async fn init_settings() -> *const shared_mem::SharedMem {
     let settings = shared_mem::SharedMem::default();
-    let _ = SETTINGS.set(settings);
+    let _ = SETTINGS.set(RwLock::new(settings));
 
-    return SETTINGS.get().unwrap();
+    return SETTINGS.get().unwrap().write().as_deref().unwrap();
 }
 
 #[wasm_bindgen]
 pub fn trace() {
-    let mut camera = Camera::new(SETTINGS.get().unwrap());
+    let mut camera = Camera::new(SETTINGS.get().unwrap().read().as_ref().unwrap());
     camera.location = Vector3::new(-2.0, 2.0, 1.0);
     camera.look_at = Vector3::new(0.0, 0.0, -1.0);
 
