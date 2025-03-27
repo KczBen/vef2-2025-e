@@ -16,7 +16,6 @@ let MAX_DEPTH = 8;
 * 2 Samples Per Pixel
 * 3 Max Bounces
 * 4 Texture changed
-* 5 Time start
 */
 
 let gl;
