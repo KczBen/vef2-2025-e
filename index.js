@@ -4,6 +4,8 @@ let settings;
 
 let WIDTH = 1280;
 let HEIGHT = 720;
+let MAX_SAMPLES = 512;
+let MAX_DEPTH = 8;
 
 /* 
 * LAYOUT:
@@ -11,6 +13,7 @@ let HEIGHT = 720;
 * 1 Texture Height
 * 2 Samples Per Pixel
 * 3 Max Bounces
+* 4 Texture changed
 */
 
 let gl;
@@ -19,24 +22,62 @@ let texturePointer;
 let textureData;
 let i32View;
 
-async function runWasm() {
+async function initWasm() {
     wasmMemory = (await init()).memory;
     settings = (await init_settings()) / 4;
     i32View = new Int32Array(wasmMemory.buffer);
     i32View[settings + 0] = WIDTH;
     i32View[settings + 1] = HEIGHT;
-    i32View[settings + 2] = 4;
-    i32View[settings + 3] = 4;
-    setupScene();
-    trace();
-    texturePointer = await get_texture();
-    webglSetup();
+    i32View[settings + 2] = MAX_SAMPLES;
+    i32View[settings + 3] = MAX_DEPTH;
+    i32View[settings + 4] = 0;
 }
 
-runWasm();
+WIDTH = window.innerWidth / 2;
+HEIGHT = window.innerHeight / 2;
+
+await initWasm();
+
+setupScene();
+runTracer();
+
+async function runTracer() {
+    trace();
+    console.log("Began tracing");
+
+    let samples = 0;
+
+    while (samples < MAX_SAMPLES) {
+        if (i32View[settings + 4] === 1) {
+            i32View[settings + 4] = 0;
+            texturePointer = await get_texture();
+            webglSetup();
+            samples += 1;
+        }
+
+        else {
+            await sleep(1);
+        }
+    }
+}
 
 function setupScene() {
-    add_sphere(0,-1000,0, 1000, 0, 0.5, 0.5, 0.5, 0.0);
+    // Ground
+    add_sphere(0, -1000, 0, 1000, 0, 0.5, 0.5, 0.2, 0.0);
+    // Glass
+    add_sphere(0, 0.5, 0, 1, 2, 0.7, 0.1, 0.1, 1.6);
+    add_sphere(0, 0.5, 0, 0.5, 2, 1.0, 1.0, 1.0, 1.0);
+    // Metal inside glass
+    add_sphere(0, 0.5, 0, 0.25, 1, 0.7, 0.1, 0.1, 0.0);
+
+    // Blue metal (left)
+    add_sphere(-1.5, 0.25, -0.5, 0.5, 1, 0.1, 0.3, 0.8, 0.15);
+
+    // Green metal (right)
+    add_sphere(0.0, 0.3, 1.7, 0.6, 1, 0.1, 0.5, 0.2, 0.0);
+
+    // Yellow (Lambertian)
+    add_sphere(-12.0, 2.0, 0.0, 4.0, 0, 0.4, 0.4, 0.1, 0.0);
 }
 
 function sleep(time) {

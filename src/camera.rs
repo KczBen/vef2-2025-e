@@ -1,3 +1,10 @@
+use core::f32;
+
+use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::js_sys::Promise;
+use wasm_bindgen_futures::JsFuture;
+
+use crate::{console_log, log, SETTINGS};
 use crate::vector3::Vector3;
 
 use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, rng, scene_object::scene_object::SceneObject, shared_mem::SharedMem, TEXTURE};
@@ -15,15 +22,16 @@ pub struct Camera {
     pub look_at: Vector3,
     pub up: Vector3,
 
-    pixel_samples_scale:f32,
     camera_centre: Vector3,
     pixel_00_loc: Vector3,
     pixel_delta_u: Vector3, 
     pixel_delta_v: Vector3,
     u: Vector3,
     v: Vector3,
-    w: Vector3,    
-    texture: Vec<u8>, 
+    w: Vector3,
+    sample_count: u32,
+    reservoir: Vec<f32>,
+    temp_texture: Vec<u8>,
 }
 
 impl Camera {
@@ -34,36 +42,41 @@ impl Camera {
             image_height: settings.target_height,
             samples_per_pixel: settings.samples_per_pixel,
             max_depth: settings.max_bounces,
-            pixel_samples_scale: 1.0 / settings.samples_per_pixel as f32,
             ..Default::default()
         }
     }
 
-    pub fn set_resolution(&mut self, width: u32, height: u32) {
-        self.image_width = width;
-        self.image_height = height;
-        self.aspect_ratio = width as f32 / height as f32;
-    }
-    
-    pub fn render(&mut self, world: &ObjectList) {
+    pub async fn render(&mut self, world: &ObjectList) {
         self.initialise();
 
-        for row in 0..self.image_height {
-            for col in 0..self.image_width {
-                let mut pixel_color = Vector3::new(0.0, 0.0, 0.0);
-
-                for _sample in 0..self.samples_per_pixel {
+        for _sample in 0..self.samples_per_pixel {
+            for row in 0..self.image_height {
+                for col in 0..self.image_width {
+                    let mut pixel_color = Vector3::new(0.0, 0.0, 0.0);
                     let ray = self.get_ray(col, row);
                     pixel_color += Self::ray_color(&ray, &world, self.max_depth);
+                    // Write accumulated texture here, before gamma correction
+                    color::write_color(pixel_color, &mut self.reservoir, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
                 }
-
-                color::write_color(self.pixel_samples_scale * pixel_color, &mut self.texture, ((self.image_width * ((self.image_height - 1) - row) + col) * 3) as usize);
             }
-        }
-    
-        // yolo
-        unsafe {
-            TEXTURE = self.texture.clone();
+
+            // Done rendering the first sample, now gamma correct and clone
+            self.sample_count += 1;
+            color::gamma_correct_average(&mut self.temp_texture, &self.reservoir, self.sample_count);
+
+            unsafe {
+                TEXTURE = self.temp_texture.clone();
+                if let Some(settings) = SETTINGS.get() {
+                    match settings.write() {
+                        Ok(mut settings) => {
+                            settings.texture_changed = 1;
+                            let promise = Promise::resolve(&JsValue::NULL);
+                            let _ = JsFuture::from(promise).await;
+                        },
+                        Err(_) => console_log!("Failed to flip write flag"),
+                    }
+                }
+            }
         }
     }
 
@@ -91,6 +104,9 @@ impl Camera {
 
         let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * ((self.image_width as f32)/self.image_height as f32);
+
+        self.reservoir = vec![0f32; self.image_width as usize * self.image_height as usize * 3];
+        self.temp_texture = vec![0u8; self.image_width as usize * self.image_height as usize * 3];
 
         self.w = (self.location - self.look_at).normalize();
         self.u = (self.up.cross(self.w)).normalize();
@@ -130,23 +146,17 @@ impl Camera {
 
 impl Default for Camera {
     fn default() -> Self {
-        let aspect_ratio = 16.0/9.0;
-        let image_height = 1440;
-        let image_width = (aspect_ratio * image_height as f32) as u32;
-        let samples_per_pixel = 4;
-        let pixel_samples_scale = 1.0 / samples_per_pixel as f32;
-
         return Camera{
-            samples_per_pixel,
-            aspect_ratio,
-            image_width,
-            image_height,
-            texture: vec![0u8; image_width as usize * image_height as usize * 3],
+            samples_per_pixel: 0,
+            aspect_ratio: f32::INFINITY,
+            image_width: 0,
+            image_height: 0,
+            reservoir: vec![0f32; 0 as usize * 0 as usize * 3],
+            temp_texture: vec![0u8; 0 as usize * 0 as usize * 3],
             camera_centre: Vector3::new(0.0, 0.0, 0.0),
             pixel_00_loc: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vector3::new(0.0, 0.0, 0.0),
             pixel_delta_v: Vector3::new(0.0, 0.0, 0.0),
-            pixel_samples_scale,
             max_depth: 8,
             fov_vertical: 90.0,
             location: Vector3::new(0.0, 0.0, 0.0),
@@ -155,6 +165,7 @@ impl Default for Camera {
             u: Vector3::new(0.0, 0.0, 0.0),
             v: Vector3::new(0.0, 0.0, 0.0),
             w: Vector3::new(0.0, 0.0, 0.0),
+            sample_count: 0,
         }
     }
 }
