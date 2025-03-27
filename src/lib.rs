@@ -47,12 +47,7 @@ static SETTINGS: OnceLock<shared_mem::SharedMem> = OnceLock::new();
 #[wasm_bindgen(start)]
 fn init() {
     // Scene
-    let mut world = object_list::object_list::ObjectList::default();
-
-    let material_ground = Arc::new(material::Lambertian::new(Vector3::new(0.8, 0.8, 0.0)));
-    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(object);
-
+    let world = object_list::object_list::ObjectList::default();
     let _ = WORLD.set(Arc::new(RwLock::new(world)));
 }
 
@@ -76,6 +71,36 @@ pub fn trace() {
             Err(_) => console_log!("Failed to get world")
         }
     };
+}
+
+#[wasm_bindgen]
+pub fn add_sphere(x: f32, y: f32, z: f32, diameter: f32, material: u32, r: f32, g: f32, b: f32, special: f32) {
+    if let Some(world) = WORLD.get() {
+        match world.write() {
+            Ok(mut world) => {
+                // Metal 
+                if material == 1 {
+                    let mat = Arc::new(material::Metal::new(Vector3::new(r, g, b), special));
+                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    world.add(object);
+                }
+                // Dielectric
+                else if material == 2 {
+                    let mat = Arc::new(material::Metal::new(Vector3::new(r, g, b), special));
+                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    world.add(object);
+                }
+                // Default to Lambertian
+                else {
+                    let mat = Arc::new(material::Lambertian::new(Vector3::new(r, g, b)));
+                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    world.add(object);
+                } 
+            },
+
+            Err(_) => console_log!("Failed to get write lock on world")
+        }
+    }
 }
 
 // This is probably all doable without unsafe blocks

@@ -1,4 +1,4 @@
-import init, { get_texture, trace, init_settings } from './pkg/vef2_2025_e.js';
+import init, { get_texture, trace, init_settings, add_sphere } from './pkg/vef2_2025_e.js';
 
 let settings;
 
@@ -25,14 +25,31 @@ async function runWasm() {
     i32View = new Int32Array(wasmMemory.buffer);
     i32View[settings + 0] = WIDTH;
     i32View[settings + 1] = HEIGHT;
-    i32View[settings + 2] = 1;
+    i32View[settings + 2] = 4;
     i32View[settings + 3] = 4;
     trace();
     texturePointer = await get_texture();
+    console.log(texturePointer);
+    webglSetup();
+
+    await sleep(1000);
+
+    setupScene();
+    trace();
+    texturePointer = await get_texture();
+    console.log(texturePointer);
     webglSetup();
 }
 
 runWasm();
+
+function setupScene() {
+    add_sphere(0,-1000,0, 1000, 0, 0.5, 0.5, 0.5, 0.0);
+}
+
+function sleep(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
 
 function resizeCanvas() {
     const canvas = document.getElementById("gl-canvas");
