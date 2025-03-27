@@ -27,17 +27,9 @@ async function runWasm() {
     i32View[settings + 1] = HEIGHT;
     i32View[settings + 2] = 4;
     i32View[settings + 3] = 4;
-    trace();
-    texturePointer = await get_texture();
-    console.log(texturePointer);
-    webglSetup();
-
-    await sleep(1000);
-
     setupScene();
     trace();
     texturePointer = await get_texture();
-    console.log(texturePointer);
     webglSetup();
 }
 
