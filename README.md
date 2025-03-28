@@ -56,8 +56,9 @@ Stretch goals (if possible): Multi-threading, SIMD, second book of the series.
 Subject to change
 
 This roughly represents the effort put into the project *besides the path tracing code*. I'm just doing that part for fun.
-* 50% Researching WebAssembly capabilities
 * 30% Integration with JavaScript
+* 25% Researching WebAssembly capabilities
+* 25% Researching Rust capabilities
 * 20% Overall usability - UI, path tracing accuracy (as is in the book)
 
 ## Building
