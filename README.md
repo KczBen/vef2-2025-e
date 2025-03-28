@@ -1,5 +1,6 @@
 # A Rust-written CPU path tracer for the web
-
+![A dark scene of spheres lit by a bright light](Example.png)
+*Render time: 56 minutes*
 ## Introduction
 The code is a Rust adaptation of the code found in the [Ray Tracing in One Weekend](https://raytracing.github.io/) book.
 
