@@ -4,7 +4,7 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::{console_log, log, SETTINGS};
+use crate::SETTINGS;
 use crate::vector3::Vector3;
 
 use crate::{color, interval, object_list::object_list::ObjectList, ray::ray::Ray, rng, scene_object::scene_object::SceneObject, shared_mem::SharedMem, TEXTURE};
