@@ -97,7 +97,7 @@ async function runTracer() {
     else {
         webglSetup(WIDTH, HEIGHT, 0);
     }
-    
+
     let samples = 0;
 
     while (samples < MAX_SAMPLES) {
@@ -188,9 +188,9 @@ document.addEventListener('mousedown', (e) => {
 
     i32View[settings + 0] = MOVEWIDTH;
     i32View[settings + 1] = MOVEHEIGHT;
-  });
-  
-  document.addEventListener('mouseup', async () => {
+});
+
+document.addEventListener('mouseup', async () => {
     isDragging = false;
 
     i32View[settings + 0] = WIDTH;
@@ -198,36 +198,36 @@ document.addEventListener('mousedown', (e) => {
     i32View[settings + 11] = 1;
 
     runTracer();
-  });
+});
   
-  document.addEventListener('mousemove', (e) => {
+document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-  
+
     const deltaX = e.clientX - prevMouseX;
     const deltaY = e.clientY - prevMouseY;
     prevMouseX = e.clientX;
     prevMouseY = e.clientY;
-  
+
     const offsetX = originX - lookAtX;
     const offsetY = originY - lookAtY;
     const offsetZ = originZ - lookAtZ;
-    
+
     const radius = Math.sqrt(offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ);
     let theta = Math.atan2(offsetZ, offsetX);
     let phi = Math.acos(offsetY / radius);
-  
+
     const sensitivity = 0.005;
-    
+
     theta += deltaX * sensitivity;
     phi -= deltaY * sensitivity;
-    
+
     const epsilon = 0.1;
     phi = Math.max(epsilon, Math.min(Math.PI - epsilon, phi));
-  
+
     originX = lookAtX + radius * Math.sin(phi) * Math.cos(theta);
     originY = lookAtY + radius * Math.cos(phi);
     originZ = lookAtZ + radius * Math.sin(phi) * Math.sin(theta);
-  
+
     f32View[settings + 4] = originX;
     f32View[settings + 5] = originY;
     f32View[settings + 6] = originZ;
@@ -235,7 +235,7 @@ document.addEventListener('mousedown', (e) => {
     i32View[settings + 11] = 1;
 
     runTracer();
-  });
+});
 
 window.addEventListener('resize', resizeCanvas);
 
