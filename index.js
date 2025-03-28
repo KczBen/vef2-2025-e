@@ -49,7 +49,8 @@ let lookAtX = 0.0;
 let lookAtY = 0.0;
 let lookAtZ = 0.0;
 
-let isDragging = false;
+let orbit = false;
+let pan = false;
 let prevMouseX = 0;
 let prevMouseY = 0;
 
@@ -91,7 +92,7 @@ async function runTracer() {
     trace();
     
     texturePointer = await get_texture();
-    if (isDragging) {
+    if (orbit) {
         webglSetup(MOVEWIDTH, MOVEHEIGHT, 1);
     }
     else {
@@ -104,7 +105,7 @@ async function runTracer() {
         if (i32View[settings + 10] === 1) {
             i32View[settings + 10] = 0;
             texturePointer = await get_texture();
-            if (isDragging) {
+            if (orbit | pan) {
                 webglSetup(MOVEWIDTH, MOVEHEIGHT, 1);
             }
             else {
@@ -181,17 +182,33 @@ window.addEventListener('wheel', function(event) {
     runTracer();
 });
 
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
 document.addEventListener('mousedown', (e) => {
-    isDragging = true;
     prevMouseX = e.clientX;
     prevMouseY = e.clientY;
-
     i32View[settings + 0] = MOVEWIDTH;
     i32View[settings + 1] = MOVEHEIGHT;
+
+    // Pan
+    if (e.button === 0) {
+        pan = true;
+    }
+    
+    // Orbit
+    if (e.button === 2) {
+        orbit = true;
+    }
 });
 
-document.addEventListener('mouseup', async () => {
-    isDragging = false;
+document.addEventListener('mouseup', (e) => {
+    if (e.button === 0) {
+        pan = false;
+    }
+    
+    if (e.button === 2) {
+        orbit = false;
+    }
 
     i32View[settings + 0] = WIDTH;
     i32View[settings + 1] = HEIGHT;
@@ -201,8 +218,17 @@ document.addEventListener('mouseup', async () => {
 });
   
 document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
+    if (orbit) {
+        orbitCamera(e);
+    }
 
+    else if (pan) {
+        panCamera(e)
+    }
+    
+});
+
+function orbitCamera(e) {
     const deltaX = e.clientX - prevMouseX;
     const deltaY = e.clientY - prevMouseY;
     prevMouseX = e.clientX;
@@ -235,7 +261,66 @@ document.addEventListener('mousemove', (e) => {
     i32View[settings + 11] = 1;
 
     runTracer();
-});
+}
+
+function panCamera(e) {
+    const deltaX = e.clientX - prevMouseX;
+    const deltaY = e.clientY - prevMouseY;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+
+    const panSpeed = 0.01;
+
+    const viewDir = {
+        x: lookAtX - originX,
+        y: lookAtY - originY,
+        z: lookAtZ - originZ
+    };
+
+    let right = cross(viewDir, { x: 0, y: 1, z: 0 });
+    right = normalize(right);
+
+    let up = cross(right, viewDir);
+    up = normalize(up);
+
+    const offset = {
+        x: right.x * (-deltaX * panSpeed) + up.x * (deltaY * panSpeed),
+        y: right.y * (-deltaX * panSpeed) + up.y * (deltaY * panSpeed),
+        z: right.z * (-deltaX * panSpeed) + up.z * (deltaY * panSpeed)
+    };
+
+    originX += offset.x;
+    originY += offset.y;
+    originZ += offset.z;
+
+    lookAtX += offset.x;
+    lookAtY += offset.y;
+    lookAtZ += offset.z;
+
+    f32View[settings + 4] = originX;
+    f32View[settings + 5] = originY;
+    f32View[settings + 6] = originZ;
+    f32View[settings + 7] = lookAtX;
+    f32View[settings + 8] = lookAtY;
+    f32View[settings + 9] = lookAtZ;
+
+    i32View[settings + 11] = 1;
+
+    runTracer();
+}
+
+function cross(v1, v2) {
+    return {
+        x: v1.y * v2.z - v1.z * v2.y,
+        y: v1.z * v2.x - v1.x * v2.z,
+        z: v1.x * v2.y - v1.y * v2.x
+    };
+}
+
+function normalize(v) {
+    const len = Math.hypot(v.x, v.y, v.z);
+    return len > 0 ? { x: v.x / len, y: v.y / len, z: v.z / len } : { x: 0, y: 0, z: 0 };
+}
 
 window.addEventListener('resize', resizeCanvas);
 
