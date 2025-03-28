@@ -184,11 +184,14 @@ window.addEventListener('wheel', function(event) {
 
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+document.addEventListener('click', (e) => e.preventDefault());
+
 document.addEventListener('mousedown', (e) => {
     prevMouseX = e.clientX;
     prevMouseY = e.clientY;
     i32View[settings + 0] = MOVEWIDTH;
     i32View[settings + 1] = MOVEHEIGHT;
+    i32View[settings + 2] = 1;
 
     // Pan
     if (e.button === 0) {
@@ -212,6 +215,7 @@ document.addEventListener('mouseup', (e) => {
 
     i32View[settings + 0] = WIDTH;
     i32View[settings + 1] = HEIGHT;
+    i32View[settings + 2] = MAX_SAMPLES;
     i32View[settings + 11] = 1;
 
     runTracer();
