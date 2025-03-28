@@ -3,6 +3,11 @@
 ## Introduction
 The code is a Rust adaptation of the code found in the [Ray Tracing in One Weekend](https://raytracing.github.io/) book.
 
+## Controls
+Hold left mouse button to pan camera\
+Hold right mouse button to orbit camera\
+Scroll wheel to change camera distance
+
 ### Rationale
 This project came about for three main reasons:
 * I like Rust
