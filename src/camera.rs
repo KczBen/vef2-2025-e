@@ -135,18 +135,34 @@ impl Camera {
         }
 
         if let Some(hit) = world.hit(ray, interval::Interval::new(0.001, std::f32::INFINITY)) {
-            // let direction = hit.normal + vector_utils::random_vec3_unit();
-            // return 0.5 * Self::ray_color(&Ray::new(hit.point, direction), world, depth - 1);
             let mut scattered: Ray = Ray::default();
             let mut attenuation = Vector3::default();
-
+    
+            if hit.material.is_emissive() {
+                return hit.material.get_emission();
+            }
+    
             if hit.material.scatter(ray, &hit, &mut attenuation, &mut scattered) {
-                return Self::ray_color(&scattered, world, depth-1).component_mul(attenuation);
+                let mut incoming_light = Self::ray_color(&scattered, world, depth - 1);
+    
+                if let Some(light_hit) = world.hit(&scattered, interval::Interval::new(0.001, std::f32::INFINITY)) {
+                    if light_hit.material.is_emissive() {
+                        let distance_squared = (light_hit.point - hit.point).norm_squared();
+    
+                        let falloff = if distance_squared > 0.0 { 1.0 / distance_squared } else { 1.0 };
+    
+                        let emission = light_hit.material.get_emission();
+    
+                        incoming_light += emission * falloff;
+                    }
+                }
+
+                return incoming_light.component_mul(attenuation);
             }
         }
 
         let a = 0.5*ray.direction().y() + 1.0;
-        return (1.0-a)*Vector3::new(1.0, 1.0, 1.0) + a*Vector3::new(0.5, 0.7, 1.0);
+        return (0.5-a)*Vector3::new(1.0, 1.0, 1.0) + a*Vector3::new(0.3, 0.4, 0.8);
     }
 }
 

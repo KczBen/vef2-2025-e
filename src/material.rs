@@ -1,8 +1,10 @@
 // I would prefer a BSDF but this *is* simpler as it is in the book
-use crate::{ray::ray::Ray, rng, scene_object::scene_object::HitRecord, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}, vector3::Vector3};
+use crate::{ray::ray::Ray, rng, scene_object::scene_object::HitRecord, vector3::Vector3, vector_utils::{self, near_zero, random_vec3_sphere, random_vec3_unit, reflect, refract}};
 
 pub trait Material: Sync + Send {
     fn scatter(&self, incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3, scattered_ray: &mut Ray) -> bool;
+    fn is_emissive(&self) -> bool;
+    fn get_emission(&self) -> Vector3;
 }
 
 #[derive(Default)]
@@ -29,6 +31,14 @@ impl Material for Lambertian {
 
         return true;
     }
+
+    fn is_emissive(&self) -> bool {
+        return false;
+    }
+
+    fn get_emission(&self) -> Vector3 {
+        return Vector3::new(0.0, 0.0, 0.0);
+    }
 }
 
 #[derive(Default)]
@@ -52,6 +62,14 @@ impl Material for Metal {
         *attenuation = self.albedo;
 
         return scattered_ray.direction().dot(hit_record.normal) > 0.0;
+    }
+
+    fn is_emissive(&self) -> bool {
+        return false;
+    }
+
+    fn get_emission(&self) -> Vector3 {
+        return Vector3::new(0.0, 0.0, 0.0);
     }
 }
 
@@ -98,5 +116,44 @@ impl Material for Dielectric {
         *scattered_ray = Ray::new(hit_record.point, direction.normalize());
 
         return true;
+    }
+
+    fn is_emissive(&self) -> bool {
+        return false;
+    }
+
+    fn get_emission(&self) -> Vector3 {
+        return Vector3::new(0.0, 0.0, 0.0);
+    }
+}
+
+#[derive(Default)]
+pub struct Emissive {
+    albedo: Vector3,
+    strength: f32
+}
+
+impl Emissive {
+    pub fn new(albedo: Vector3, strength: f32) -> Self {
+        return Self { albedo, strength };
+    }
+
+    fn is_emissive() -> bool {
+        return true;
+    }
+}
+
+impl Material for Emissive {
+    // Lambertian diffuse code, but with extra strength
+    fn scatter(&self, _incoming_ray: &Ray, hit_record: &HitRecord, attenuation: &mut Vector3, scattered_ray: &mut Ray) -> bool {
+        return false;
+    }
+
+    fn is_emissive(&self) -> bool {
+        return true;
+    }
+
+    fn get_emission(&self) -> Vector3 {
+        return self.albedo * self.strength;
     }
 }

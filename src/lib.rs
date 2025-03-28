@@ -88,6 +88,12 @@ pub fn add_sphere(x: f32, y: f32, z: f32, diameter: f32, material: u32, r: f32, 
                     let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
                     world.add(object);
                 }
+                // Emissive Lambertian
+                else if material == 3 {
+                    let mat = Arc::new(material::Emissive::new(Vector3::new(r, g, b), special));
+                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    world.add(object);
+                }
                 // Default to Lambertian
                 else {
                     let mat = Arc::new(material::Lambertian::new(Vector3::new(r, g, b)));

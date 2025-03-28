@@ -7,7 +7,7 @@ let settings;
 // Default
 let WIDTH = 160;
 let HEIGHT = 90;
-let MAX_SAMPLES = 256;
+let MAX_SAMPLES = 4096;
 let MAX_DEPTH = 8;
 
 // Should be this if we can get the screen size
@@ -112,7 +112,7 @@ async function runTracer() {
                 webglSetup(WIDTH, HEIGHT, 0);
             }
             samples += 1;
-            fpsDisplay.innerHTML = `Samples per second: ${1000 / ((performance.now() - timeStart) / samples)}`;
+            fpsDisplay.innerHTML = `Samples per second: ${1000 / ((performance.now() - timeStart) / samples)} Samples: ${samples} / ${MAX_SAMPLES}`;
         }
 
         else {
@@ -138,8 +138,8 @@ function setupScene() {
     // Green metal (right)
     add_sphere(0.0, 0.3, 1.7, 0.6, 1, 0.1, 0.5, 0.2, 0.0);
 
-    // Yellow (Lambertian)
-    add_sphere(-12.0, 2.0, 0.0, 4.0, 0, 0.4, 0.4, 0.1, 0.0);
+    // Yellow (Emissive)
+    add_sphere(1.5, 1.0, 1.0, 0.9, 3, 0.4, 0.4, 0.1, 10.0);
 }
 
 function sleep(time) {
