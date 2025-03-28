@@ -62,9 +62,7 @@ pub async fn init_settings() -> *const shared_mem::SharedMem {
 #[wasm_bindgen]
 pub async fn trace() {
     let mut camera = Camera::new(SETTINGS.get().unwrap().read().as_ref().unwrap());
-    camera.location = Vector3::new(-2.0, 2.0, 1.0);
-    camera.look_at = Vector3::new(0.0, 0.0, 0.0);
-
+    
     if let Some(world) = WORLD.get() {
         match world.read() {
             Ok(world) => camera.render(&*world).await,

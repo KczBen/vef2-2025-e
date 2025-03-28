@@ -42,14 +42,25 @@ impl Camera {
             image_height: settings.target_height,
             samples_per_pixel: settings.samples_per_pixel,
             max_depth: settings.max_bounces,
+            location: Vector3::new(settings.origin_x, settings.origin_y, settings.origin_z),
+            look_at: Vector3::new(settings.look_at_x, settings.look_at_y, settings.look_at_z),
             ..Default::default()
         }
     }
 
     pub async fn render(&mut self, world: &ObjectList) {
         self.initialise();
+        let mut settings = SETTINGS.get().unwrap().write().unwrap();
+
+        settings.busy = 1;
 
         for _sample in 0..self.samples_per_pixel {
+            // Stop rendering on user input
+            if settings.settings_changed == 1 {
+                settings.busy = 0;
+                break;
+            }
+
             for row in 0..self.image_height {
                 for col in 0..self.image_width {
                     let mut pixel_color = Vector3::new(0.0, 0.0, 0.0);
@@ -66,18 +77,13 @@ impl Camera {
 
             unsafe {
                 TEXTURE = self.temp_texture.clone();
-                if let Some(settings) = SETTINGS.get() {
-                    match settings.write() {
-                        Ok(mut settings) => {
-                            settings.texture_changed = 1;
-                            let promise = Promise::resolve(&JsValue::NULL);
-                            let _ = JsFuture::from(promise).await;
-                        },
-                        Err(_) => console_log!("Failed to flip write flag"),
-                    }
-                }
+                settings.texture_changed = 1;
+
+                let promise = Promise::resolve(&JsValue::NULL);
+                let _ = JsFuture::from(promise).await;
             }
         }
+        settings.busy = 0;
     }
 
     fn get_ray(&self, i:u32, j:u32) -> Ray {

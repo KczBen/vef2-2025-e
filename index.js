@@ -4,10 +4,17 @@ const fpsDisplay = document.getElementById('fpsDisplay');
 
 let settings;
 
+// Default
 let WIDTH = 160;
 let HEIGHT = 90;
-let MAX_SAMPLES = 512;
+let MAX_SAMPLES = 256;
 let MAX_DEPTH = 8;
+
+// Should be this if we can get the screen size
+WIDTH = window.innerWidth / 2;
+HEIGHT = window.innerHeight / 2;
+const MOVEWIDTH = WIDTH / 4;
+const MOVEHEIGHT = HEIGHT / 4;
 
 /* 
 * LAYOUT:
@@ -15,7 +22,15 @@ let MAX_DEPTH = 8;
 * 1 Texture Height
 * 2 Samples Per Pixel
 * 3 Max Bounces
-* 4 Texture changed
+* 4 Origin X
+* 5 Origin Y
+* 6 Origin Z
+* 7 LookAt X
+* 8 LookAt Y
+* 9 LookAt Z
+* 10 Texture changed
+* 11 User input, reset rendering
+* 12 Busy
 */
 
 let gl;
@@ -23,39 +38,78 @@ let wasmMemory;
 let texturePointer;
 let textureData;
 let i32View;
+let f32View;
 let timeStart;
+
+let originX = -2.0;
+let originY = 2.0;
+let originZ = 1.0;
+
+let lookAtX = 0.0;
+let lookAtY = 0.0;
+let lookAtZ = 0.0;
+
+let isDragging = false;
+let prevMouseX = 0;
+let prevMouseY = 0;
 
 async function initWasm() {
     wasmMemory = (await init()).memory;
     settings = (await init_settings()) / 4;
+    let length = 13;
     i32View = new Int32Array(wasmMemory.buffer);
+    f32View = new Float32Array(wasmMemory.buffer);
     i32View[settings + 0] = WIDTH;
     i32View[settings + 1] = HEIGHT;
     i32View[settings + 2] = MAX_SAMPLES;
     i32View[settings + 3] = MAX_DEPTH;
-    i32View[settings + 4] = 0;
+    i32View[settings + 10] = 0;
+    i32View[settings + 11] = 0;
+    i32View[settings + 12] = 0;
+
+    f32View[settings + 4] = originX;
+    f32View[settings + 5] = originY;
+    f32View[settings + 6] = originZ;
+    f32View[settings + 7] = lookAtX;
+    f32View[settings + 8] = lookAtY;
+    f32View[settings + 9] = lookAtZ;
 }
 
-WIDTH = window.innerWidth / 2;
-HEIGHT = window.innerHeight / 2;
-
 await initWasm();
-
 setupScene();
 runTracer();
 
 async function runTracer() {
+    // wait for path tracer to stop
+    while (i32View[settings + 12] === 1) {
+        await sleep(1);
+    }
+
+    
+    i32View[settings + 11] = 0;
     timeStart = performance.now();
     trace();
-    console.log("Began tracing");
-
+    
+    texturePointer = await get_texture();
+    if (isDragging) {
+        webglSetup(MOVEWIDTH, MOVEHEIGHT, 1);
+    }
+    else {
+        webglSetup(WIDTH, HEIGHT, 0);
+    }
+    
     let samples = 0;
 
     while (samples < MAX_SAMPLES) {
-        if (i32View[settings + 4] === 1) {
-            i32View[settings + 4] = 0;
+        if (i32View[settings + 10] === 1) {
+            i32View[settings + 10] = 0;
             texturePointer = await get_texture();
-            webglSetup();
+            if (isDragging) {
+                webglSetup(MOVEWIDTH, MOVEHEIGHT, 1);
+            }
+            else {
+                webglSetup(WIDTH, HEIGHT, 0);
+            }
             samples += 1;
             fpsDisplay.innerHTML = `Samples per second: ${1000 / ((performance.now() - timeStart) / samples)}`;
         }
@@ -64,6 +118,8 @@ async function runTracer() {
             await sleep(1);
         }
     }
+
+    i32View[settings + 12] = 0;
 }
 
 function setupScene() {
@@ -96,10 +152,95 @@ function resizeCanvas() {
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
+window.addEventListener('wheel', function(event) {
+    let delta = event.deltaY;
+    
+    let vecX = lookAtX - originX;
+    let vecY = lookAtY - originY;
+    let vecZ = lookAtZ - originZ;
+    
+    let length = Math.sqrt(vecX*vecX + vecY*vecY + vecZ*vecZ);
+    
+    if (length === 0) return;
+    
+    let normX = vecX / length;
+    let normY = vecY / length;
+    let normZ = vecZ / length;
+    
+    let step = 0.001 * delta;
+    originX -= normX * step;
+    originY -= normY * step;
+    originZ -= normZ * step;
+
+    f32View[settings + 4] = originX;
+    f32View[settings + 5] = originY;
+    f32View[settings + 6] = originZ;
+
+    i32View[settings + 11] = 1;
+
+    runTracer();
+});
+
+document.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+
+    i32View[settings + 0] = MOVEWIDTH;
+    i32View[settings + 1] = MOVEHEIGHT;
+  });
+  
+  document.addEventListener('mouseup', async () => {
+    isDragging = false;
+
+    i32View[settings + 0] = WIDTH;
+    i32View[settings + 1] = HEIGHT;
+    i32View[settings + 11] = 1;
+
+    runTracer();
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+  
+    const deltaX = e.clientX - prevMouseX;
+    const deltaY = e.clientY - prevMouseY;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+  
+    const offsetX = originX - lookAtX;
+    const offsetY = originY - lookAtY;
+    const offsetZ = originZ - lookAtZ;
+    
+    const radius = Math.sqrt(offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ);
+    let theta = Math.atan2(offsetZ, offsetX);
+    let phi = Math.acos(offsetY / radius);
+  
+    const sensitivity = 0.005;
+    
+    theta += deltaX * sensitivity;
+    phi -= deltaY * sensitivity;
+    
+    const epsilon = 0.1;
+    phi = Math.max(epsilon, Math.min(Math.PI - epsilon, phi));
+  
+    originX = lookAtX + radius * Math.sin(phi) * Math.cos(theta);
+    originY = lookAtY + radius * Math.cos(phi);
+    originZ = lookAtZ + radius * Math.sin(phi) * Math.sin(theta);
+  
+    f32View[settings + 4] = originX;
+    f32View[settings + 5] = originY;
+    f32View[settings + 6] = originZ;
+
+    i32View[settings + 11] = 1;
+
+    runTracer();
+  });
+
 window.addEventListener('resize', resizeCanvas);
 
 // setup webgl on load
-function webglSetup() {
+function webglSetup(width, height, mode) {
     const canvas = document.getElementById("gl-canvas");
 
     gl = canvas.getContext('webgl2');
@@ -153,16 +294,23 @@ function webglSetup() {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(gl.getUniformLocation(program, 'uSampler'), 0);
 
-    textureData = new Uint8Array(wasmMemory.buffer, texturePointer, WIDTH * HEIGHT * 3);
+    textureData = new Uint8Array(wasmMemory.buffer, texturePointer, width * height * 3);
 
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, WIDTH, HEIGHT, 0, gl.RGB, gl.UNSIGNED_BYTE, textureData);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, textureData);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    if (mode === 0) {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    }
+
+    else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
 
     resizeCanvas();
     
