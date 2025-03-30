@@ -111,59 +111,6 @@ This is a flag set by JavaScript to inform Rust that the old scene settings are 
 3. `busy`\
 This is a flag set by Rust to inform JavaScript that the path tracer is currently busy. It serves to synchronise the submission of new camera data to the path tracer. When the settings change, the `settings_changed` flag is set to 1. From here, it takes some time for the path tracer to stop, depending on how far along the current sample is. JavaScript waits for the `busy` flag to be set to 0 before submitting the new camera settings to Rust and restarting the path tracer with the new settings.
 
-# Rust
-The primary language of this project is Rust. It is a statically typed, compiled systems programming language with a focus on performance and memory safety. It achieves this by use of the "Borrow checker", which validates the lifetimes of references at compile time to prevent use-after-free bugs, dangling pointers and other memory safety violations. Array accesses are checked at runtime to prevent buffer overflow errors. Other languages, notably C++ may also be written in a way to minimise the risk of such bugs.
-
-The rich ecosystem and support for WASM makes Rust an ideal language for targetting this platform. This project uses the `wasm-bindgen` and `wasm-pack` crates to interface with JavaScript and help with compiling and packaging the WASM module.
-
-## Error handling
-Rust has no `null` value, and no exceptions. Instead, it uses the `Option<T>` and `Result<T, E>` return types for error handling.
-
-### Option<T>
-An option is a value that may or may not exists. In the code, it is used for ray sphere intersection. Options can have one of two values:
-`Some<T>`\
-`Some<T>` indicates the presence of a value of type `T`.
-
-`None`\
-`None` is the safe equivalent of `null`, and indicates the lack of a value.
-
-The use of these types ensures that the return value of a function is always valid. Both cases must be handled. The function `unwrap()` may be used to neglect handling the `None` case. If `unwrap()` consumes a `None`, it panics and the program safely crashes.
-
-The modern C++ equivalent type is `std::optional<T>` *as of C++17*
-
-### Result<T, E>
-Results are the type equivalent of exceptions in other languages. Results can have one of two values:
-`T`\
-`T` is the successful return value of the function of type `T`.
-
-`E`\
-`E` is the error type of the function, indicating that the function failed. It replaces C++ exceptions or C error codes.
-
-As with `Option<T>`, both cases must be handled. `unwrap()` may be used to neglect handling the `E` case. If `unwrap()` consumes an `E`, it panics and the program safely crashes.
-
-The modern C++ equivalent type is `std::expected<T, E>` *as of C++23*
-
-## Memory management
-## Ownership
-The Rust borrow checker enforces ownership rules. Every value must have an owner, and the value's lifetime depends on the lifetime of the owner. When the owner goes out of scope, its lifetime ends and all owned values are dropped. Values may be borrowed from their owner by use of a reference `&`. References are immutable by default, their values may only be read but not written. Multiple immutable references to a value may exist at once. Mutable references `&mut` allow the underlying value to be changed. Only one mutable reference to a value may exist at one time.
-
-Since ownership isn't transferred when a value is borrowed, the borrowed value cannot be dropped moved or dropped.
-
-Ownership may be transferred when values are explicitly moved. When ownership is transferred, references to the original owner become invalid.
-
-This mechanism effectively prevents dangling pointers and use-after-free errors. Since this all happens in the compiler, it has no effect on runtime performance.
-
-## Heap allocations
-All Rust primitive types are stack allocated by default. Heap allocations can be made in sevaral ways. The simples way is by use of the `Box<T>` type. `Box` creates a heap allocation and stores a pointer to it. It is the equivalent of `malloc` in C. Unlike C, the allocated memory is freed when the `Box` goes out of scope. `Box` uniquely owns the reference to the heap allocation.
-
-`Box` allocations may be leaked using the `leak()` function. This allows the heap allocation to outlive its owner. As long as the new reference is accessible, a new `Box` can be created from it and properly dropped when it is no longer needed. If the reference goes out of scope, the heap allocation is not automatically freed, resulting in a memory leak.
-
-Other heap allocators are `Rc<T>` and `Arc<T>`. Like `Box`, these create a heap allocation and store a pointer to it. Unlike `Box`, `Rc` and `Arc` are reference counted shared pointers. There may be multiple references to the heap allocation. Their main differenec is that `Arc` is an atomic thread safe type.
-
-`Arc` is used for storing scene and object data in this project. This would allow multiple objects to reference the same material, though in practice, it is not used that way.
-
-It should be noted that any use of shared memory must be treated with care. This violates Rust's memory safety rules, and can put your program into an unknown state. WASM offers no memory segmentation, the entire memory buffer can be read from, and written to by JavaScript.
-
 # Graphics
 The code in this project is a very basic path tracer. Path tracing simulates light reflecting off surfaces, passing through, and refracting inside objects. In a more abstract mathematical definition, path tracing solves this equation:
 
