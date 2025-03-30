@@ -1,5 +1,3 @@
-# This is all work-in-progress notes
-
 # Introduction
 This project implements the path tracing code from the book [Ray Tracing in One Weekend](https://raytracing.github.io/) in the Rust programming language. It is compiled to WebAssembly and runs in a web browser.
 

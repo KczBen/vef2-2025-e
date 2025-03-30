@@ -1,4 +1,3 @@
-# This contains the presentation topics and some notes
 ## What I made
 For my project, I wrote a path tracer (or ray tracer). It is based on the book `Ray Tracing in One Weekend`. It's a very simple path tracer with only bounce lighting. It doesn't look particularly interesting, but it's not the focus of the presentation. You don't need knowledge about graphics to follow along, but I will mention the basics of ray and path tracing:
 
