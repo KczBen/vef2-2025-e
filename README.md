@@ -1,4 +1,5 @@
 # A Rust-written CPU path tracer for the web
+The full report can be found in `REPORT.md`
 ![A dark scene of spheres lit by a bright light](Example.png)
 *Render time: 56 minutes*
 ## Introduction
