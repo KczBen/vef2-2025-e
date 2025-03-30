@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Tracing and WebAssembly</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/black.min.css">
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h2>WebAssembly</h2>
+                <ul>
+                    <li>Expands JavaScript</li>
+                    <li>Works in the browser or on the server</li>
+                </ul>
+            </section>
+            <section>
+                <h2>WebAssembly Basics</h2>
+                <ul>
+                    <li>Not really a "language", but a compilation target</li>
+                    <li>Faster than JavaScript</li>
+                    <li>Portable</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Choose your language</h2>
+                <ul>
+                    <li>Standard text format (WAT)</li>
+                    <li>30+ languages can compile to WebAssembly</li>
+                    ...but you'll mainly use C/C++/Rust
+                </ul>
+            </section>
+            <section>
+                <h2>C isn't ideal</h2>
+                <ul>
+                    <li>Additional attack surface</li>
+                    <li>Vulnerable C code is also vulnerable in WASM</li>
+                    <li>Buffer overflows, use-after-free and double-free bugs</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Why Rust?</h2>
+                <ul>
+                    <li>Memory safety without garbage collection</li>
+                    <li>Same performance as C/C++</li>
+                    <li>Great tooling and ecosystem</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Hello, Rust!</h2>
+                <ul>
+                    <li>Rust syntax is similar to C++ and OCaml</li>
+                </ul>
+                <pre><code class="language-rust">fn main() {
+    println!("Hello, Rust!");
+}
+                </code></pre>
+            </section>
+            <section>
+                <h2>Into the browser - 1</h2>
+                <ul>
+                    <li>Technically no setup needed, Rust compiles natively</li>
+                    <li>But we'll use two helper libraries</li>
+                    <li>wasm-bindgen helps interfacing with JavaScript</li>
+                    <li>wasm-pack packages our code into an ES module</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Into the browser - 2</h2>
+                <ul>
+                    <li>We can't run WASM directly, we need JavaScript</li>
+                    <li>For that, we must expose the function to JavaScript</li>
+                </ul>
+                <pre><code class="language-rust">#[wasm_bindgen]
+pub fn hello_rust() {
+    println!("Hello, world!");
+}</code></pre>Compile with
+<pre><code class="language-bash">wasm-pack build --target nodejs</code></pre>
+            </section>
+            <section>
+                <h2>Into the browser - 3</h2>
+                <ul>
+                    <li>No direct API access, not even console</li>
+                    <li>We have 3 options</li>
+                    <ul>
+                        <li>Import console.log() and call it from Rust</li>
+                        <li>Pass the string to JavaScript as a return value</li>
+                        <li>Put the string in memory and read it from JavaScript</li>
+                    </ul>
+                    <li>All options are valid, but the first 2 are safer</li>
+                    <li>Values passed are automatically type converted</li>
+                    <li>In the end, they all go through JavaScript</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Into the browser - 4</h2>
+                <ul>
+                    <li>Pass the string to JavaScript and print from there</li>
+                </ul>
+                <pre><code class="language-rust">#[wasm_bindgen]
+pub fn hello_rust() -> String {
+    return "Hello, Rust!".to_string();
+}</code></pre>
+            </section>
+            <section>
+                <h2>Performance</h2>
+                <ul>
+                    <li>Primary benefit of using WASM</li>
+                    <li>10-50% faster</li>
+                    <li>Use modern CPU features for additional performance</li>
+                </ul>
+            </section>
+            <section>
+                <h2>The v128 type and SIMD</h2>
+                <ul>
+                    <li>WASM allows you to use vector CPU extensions</li>
+                    <li>Perform the same operation on multiple data in parallel</li>
+                </ul>
+            </section>
+            <section>
+                <h2>SIMD and ray tracing</h2>
+                <ul>
+                    <li>Rays have two components</li>
+                    <ul>
+                        <li>Origin</li>
+                        <li>Direction</li>
+                    </ul>
+                    Both 3-dimensional vectors
+                    <li>Ray tracing makes heavy use of linear algebra</li>
+                    <li>Speeding these up is crucial for performance</li>
+                </ul>
+            </section>
+            <section>
+                <h2>SIMD Example</h2>
+                Adding 2 vectors <br>
+                Normal approach
+                <pre><code class="language-rust">fn add_vec(vec1: vector3, vec2: vector3) -> vector3 {
+return vector3::new(vec1.x + vec2.x,
+                    vec1.y + vec2.y,
+                    vec1.z + vec2.z);
+}</code></pre>
+3 operations (+ 6 load, 3 store)
+            </section>
+            <section>
+                <h2>SIMD Example</h2>
+                Adding 2 vectors <br>
+                SIMD approach
+<pre><code class="language-rust">fn add_vec(vec1: v128, vec2: v128) -> v128 {
+    return f32x4_add(vec1, vec2);
+}</code></pre>
+Single operation (+ 1 load, 1 store) <br>
+                <ul>
+                    <li>30% increase in overall performance</li>
+                    <li>Not possible in JavaScript</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Resources - Rust/Wasm</h2>
+                <ul>
+                    <li><a href="https://doc.rust-lang.org/stable/book/title-page.html">The Rust Programming Language</a></li>
+                    <li><a href="https://rustwasm.github.io/docs/book/">Rust WebAssembly Book</a></li>
+                    <li><a href="https://developer.mozilla.org/en-US/docs/WebAssembly">MDN WebAssembly Guide</a></li>
+                </ul>
+            </section>
+            <section>
+                <h2>Resources - Graphics</h2>
+                <ul>
+                    <li><a href="https://raytracing.github.io/">Ray Tracing In One Weekend series</a></li>
+                    <li><a href="https://learnopengl.com/">Learn OpenGL</a></li>
+                </ul>
+            </section>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            plugins: []
+        });
+    </script>
+</body>
+</html>
