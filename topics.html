@@ -139,11 +139,11 @@ pub fn hello_rust() -> String {
                 Adding 2 vectors <br>
                 Normal approach
                 <pre><code class="language-rust">fn add_vec(vec1: vector3, vec2: vector3) -> vector3 {
-return vector3::new(vec1.x + vec2.x,
-                    vec1.y + vec2.y,
-                    vec1.z + vec2.z);
+    return vector3::new(vec1.x + vec2.x,
+                        vec1.y + vec2.y,
+                        vec1.z + vec2.z);
 }</code></pre>
-3 operations (+ 6 load, 3 store)
+3 operations
             </section>
             <section>
                 <h2>SIMD Example</h2>
@@ -152,7 +152,7 @@ return vector3::new(vec1.x + vec2.x,
 <pre><code class="language-rust">fn add_vec(vec1: v128, vec2: v128) -> v128 {
     return f32x4_add(vec1, vec2);
 }</code></pre>
-Single operation (+ 1 load, 1 store) <br>
+Single operation<br>
                 <ul>
                     <li>30% increase in overall performance</li>
                     <li>Not possible in JavaScript</li>
