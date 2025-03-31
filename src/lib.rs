@@ -15,6 +15,9 @@ use std::cell::RefCell;
 use std::sync::{Arc, OnceLock, RwLock};
 
 use camera::Camera;
+use object_list::object_list::ObjectList;
+use shared_mem::SharedMem;
+use sphere::sphere::Sphere;
 use wasm_bindgen::prelude::*;
 use crate::vector3::Vector3;
 use crate::rng::Xorshift32State;
@@ -41,19 +44,19 @@ thread_local! {
     static RNG: RefCell<Xorshift32State> = RefCell::new(Xorshift32State::new(0xBAD5EED));
 }
 
-static WORLD: OnceLock<Arc<RwLock<object_list::object_list::ObjectList>>> = OnceLock::new();
-static SETTINGS: OnceLock<RwLock<shared_mem::SharedMem>> = OnceLock::new();
+static WORLD: OnceLock<Arc<RwLock<ObjectList>>> = OnceLock::new();
+static SETTINGS: OnceLock<RwLock<SharedMem>> = OnceLock::new();
 
 #[wasm_bindgen(start)]
 fn init() {
     // Scene
-    let world = object_list::object_list::ObjectList::default();
+    let world = ObjectList::default();
     let _ = WORLD.set(Arc::new(RwLock::new(world)));
 }
 
 #[wasm_bindgen]
-pub async fn init_settings() -> *const shared_mem::SharedMem {
-    let settings = shared_mem::SharedMem::default();
+pub async fn init_settings() -> *const SharedMem {
+    let settings = SharedMem::default();
     let _ = SETTINGS.set(RwLock::new(settings));
 
     return SETTINGS.get().unwrap().write().as_deref().unwrap();
@@ -79,19 +82,19 @@ pub fn add_sphere(x: f32, y: f32, z: f32, diameter: f32, material: u32, r: f32, 
                 // Metal 
                 if material == 1 {
                     let mat = Arc::new(material::Metal::new(Vector3::new(r, g, b), special));
-                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    let object = Arc::new(Sphere::new(Vector3::new(x, y, z), diameter, mat));
                     world.add(object);
                 }
                 // Dielectric
                 else if material == 2 {
                     let mat = Arc::new(material::Dielectric::new(special));
-                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    let object = Arc::new(Sphere::new(Vector3::new(x, y, z), diameter, mat));
                     world.add(object);
                 }
                 // Default to Lambertian
                 else {
                     let mat = Arc::new(material::Lambertian::new(Vector3::new(r, g, b)));
-                    let object = Arc::new(sphere::sphere::Sphere::new(Vector3::new(x, y, z), diameter, mat));
+                    let object = Arc::new(Sphere::new(Vector3::new(x, y, z), diameter, mat));
                     world.add(object);
                 } 
             },
